@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { useEffect, type ReactNode } from 'react';
 import { clientEnv } from '../lib/env.ts';
+import { m } from '../paraglide/messages.js';
 import { getLocale } from '../paraglide/runtime.js';
 import '@knobs/ui/fonts.css';
 import '@knobs/ui/theme.css';
@@ -28,21 +29,26 @@ function analyticsScript(clientId: string): string {
 export const Route = createRootRoute({
   component: RootComponent,
   head: () => ({
-    // Dev-only: link the unplugin's compiled CSS so SSR HTML is styled on first
-    // paint (the virtual:stylex:runtime import only injects after hydration —
-    // without this link every refresh flashes unstyled). Production CSS is
-    // emitted into app.css at build, so the link is dev-only.
-    // `precedence` is required: React 19 hoists SSR stylesheets with
-    // data-precedence, and a client link without the prop hydration-mismatches
-    // (which silently breaks event wiring on the whole tree).
-    links: import.meta.env.DEV
-      ? [{ href: '/virtual:stylex.css', precedence: 'default', rel: 'stylesheet' }]
-      : [],
+    links: [
+      // The mark carries its own dark variant, so one file covers both schemes.
+      { href: '/favicon.svg', rel: 'icon', type: 'image/svg+xml' },
+      // Dev-only: link the unplugin's compiled CSS so SSR HTML is styled on first
+      // paint (the virtual:stylex:runtime import only injects after hydration —
+      // without this link every refresh flashes unstyled). Production CSS is
+      // emitted into app.css at build, so the link is dev-only.
+      // `precedence` is required: React 19 hoists SSR stylesheets with
+      // data-precedence, and a client link without the prop hydration-mismatches
+      // (which silently breaks event wiring on the whole tree).
+      ...(import.meta.env.DEV
+        ? [{ href: '/virtual:stylex.css', precedence: 'default', rel: 'stylesheet' }]
+        : []),
+    ],
     meta: [
       // oxlint-disable-next-line text-encoding-identifier-case -- HTML meta charset must be "utf-8"
       { charSet: 'utf-8' },
       { content: 'width=device-width, initial-scale=1', name: 'viewport' },
-      { title: 'knobs' },
+      { content: m.tagline(), name: 'description' },
+      { title: m.app_name() },
     ],
   }),
 });

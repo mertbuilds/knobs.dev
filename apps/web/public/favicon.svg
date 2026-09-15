@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    text {
+      fill: #000000;
+      font-family: 'Suisse Intl', 'Inter Variable', system-ui, sans-serif;
+      font-size: 26px;
+      font-weight: 500;
+    }
+    @media (prefers-color-scheme: dark) {
+      text {
+        fill: #ffffff;
+      }
+    }
+  </style>
+  <text x="16" y="25" text-anchor="middle">k</text>
+</svg>
