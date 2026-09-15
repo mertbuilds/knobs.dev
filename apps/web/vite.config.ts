@@ -6,8 +6,6 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // VITE_* vars live in the repo-root .env (single env file for the whole monorepo).
-  envDir: '../..',
   plugins: [
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tanstackStart(),

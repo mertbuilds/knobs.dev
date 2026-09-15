@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 const clientSchema = z.object({
-  VITE_API_URL: z.url(),
-  VITE_POSTHOG_KEY: z.string().min(1).optional(),
-  VITE_SENTRY_DSN: z.url().optional(),
+  // Optional: without it the analytics script is never injected, which is the
+  // normal state locally.
+  VITE_OPENPANEL_CLIENT_ID: z.string().min(1).optional(),
 });
 
 export type ClientEnv = z.infer<typeof clientSchema>;

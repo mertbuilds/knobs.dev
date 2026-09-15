@@ -27,14 +27,10 @@ done < <(find . -name node_modules -type d -prune -not -path './.git/*')
 
 for extra in \
   .turbo \
-  apps/api/dist \
   apps/web/.output \
   apps/web/.wrangler \
   apps/web/dist \
   apps/web/src/paraglide \
-  e2e/playwright-report \
-  e2e/test-results \
-  packages/db/generated \
   packages/ui/storybook-static \
   packages/ui/dist; do
   [[ -e "$extra" ]] && TARGETS+=("$extra")
@@ -42,7 +38,7 @@ done
 
 while IFS= read -r dir; do
   TARGETS+=("$dir")
-done < <(find apps packages e2e -maxdepth 3 -type d \( -name .vite -o -name .turbo \) -prune 2>/dev/null)
+done < <(find apps packages -maxdepth 3 -type d \( -name .vite -o -name .turbo \) -prune 2>/dev/null)
 
 for t in "${TARGETS[@]}"; do
   if dry; then
@@ -67,4 +63,4 @@ else
   pnpm install
 fi
 
-echo "✓ Bad day handled. Run 'pnpm db:reset' too if the database is part of the problem."
+echo "✓ Bad day handled."

@@ -1,5 +1,5 @@
 {
-  "_comment": "Pin exact versions in args. Add per-product servers when accounts exist: posthog (npx -y @posthog/mcp@x.y.z, needs POSTHOG_API_KEY), sentry (npx -y @sentry/mcp-server@x.y.z, needs SENTRY_AUTH_TOKEN).",
+  "_comment": "Pin exact versions in args.",
   "mcpServers": {
     "context7": {
       "command": "npx",

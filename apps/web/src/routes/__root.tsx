@@ -1,4 +1,3 @@
-import { PostHogProvider } from '@posthog/react';
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router';
 import { useEffect, type ReactNode } from 'react';
 import { clientEnv } from '../lib/env.ts';
@@ -13,9 +12,17 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
   void import('virtual:stylex:runtime');
 }
 
-if (clientEnv.VITE_SENTRY_DSN && typeof window !== 'undefined') {
-  const Sentry = await import('@sentry/tanstackstart-react');
-  Sentry.init({ dsn: clientEnv.VITE_SENTRY_DSN });
+/**
+ * Loads the analytics through the site's own `/api/op` proxy. Page views only,
+ * no link or attribute tracking, and nothing at all from an automated browser.
+ * Without a client id the script is never injected — analytics is simply off.
+ */
+function analyticsScript(clientId: string): string {
+  return (
+    'if(!navigator.webdriver){window.op=window.op||function(){(window.op.q=window.op.q||[]).push(arguments)};' +
+    `window.op('init',{clientId:'${clientId}',apiUrl:'/api/op',trackScreenViews:true,trackOutgoingLinks:false,trackAttributes:false});` +
+    "var s=document.createElement('script');s.src='/api/op/op1.js';s.async=true;document.head.appendChild(s)}"
+  );
 }
 
 export const Route = createRootRoute({
@@ -28,8 +35,6 @@ export const Route = createRootRoute({
     // `precedence` is required: React 19 hoists SSR stylesheets with
     // data-precedence, and a client link without the prop hydration-mismatches
     // (which silently breaks event wiring on the whole tree).
-    // `precedence` is required: React 19 hoists SSR stylesheets with
-    // data-precedence, and a client link without the prop hydration-mismatches.
     links: import.meta.env.DEV
       ? [{ href: '/virtual:stylex.css', precedence: 'default', rel: 'stylesheet' }]
       : [],
@@ -43,8 +48,8 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
-  // Marks hydration completion; forms rely on React handlers (preventDefault),
-  // so e2e tests wait for html[data-hydrated] before interacting.
+  // Marks hydration completion; anything driving the page from React handlers
+  // is dead until this flips, so browser checks wait for html[data-hydrated].
   useEffect(() => {
     document.documentElement.dataset['hydrated'] = 'true';
   }, []);
@@ -55,34 +60,18 @@ function RootComponent() {
   );
 }
 
-function Providers({ children }: { children: ReactNode }) {
-  if (!clientEnv.VITE_POSTHOG_KEY) {
-    return children;
-  }
-  return (
-    <PostHogProvider
-      apiKey={clientEnv.VITE_POSTHOG_KEY}
-      options={{
-        api_host: '/ingest',
-        capture_heatmaps: true,
-        defaults: '2026-05-30',
-        session_recording: { maskAllInputs: true },
-        ui_host: 'https://eu.posthog.com',
-      }}
-    >
-      {children}
-    </PostHogProvider>
-  );
-}
-
 function RootDocument({ children }: { children: ReactNode }) {
+  const clientId = clientEnv.VITE_OPENPANEL_CLIENT_ID;
   return (
     <html lang={getLocale()}>
       <head>
         <HeadContent />
+        {clientId === undefined ? null : (
+          <script dangerouslySetInnerHTML={{ __html: analyticsScript(clientId) }} />
+        )}
       </head>
       <body>
-        <Providers>{children}</Providers>
+        {children}
         <Scripts />
       </body>
     </html>

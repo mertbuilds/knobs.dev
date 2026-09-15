@@ -10,6 +10,7 @@ storybook-static/
 # caches
 .turbo/
 .wrangler/
+apps/web/.tanstack/
 coverage/
 *.tsbuildinfo
 
@@ -17,18 +18,13 @@ coverage/
 .env*
 !.env.example
 
-# generated code (rebuilt by dev:setup / build)
-packages/db/generated/
+# generated code (rebuilt by build)
 apps/web/src/paraglide/
 apps/web/src/routeTree.gen.ts
 apps/web/worker-configuration.d.ts
 
 # licensed fonts — fetched by scripts/fetch-fonts.sh, never committed
 packages/ui/fonts/*.woff2
-
-# e2e artifacts
-playwright-report/
-test-results/
 
 # os
 .DS_Store
