@@ -1,4 +1,4 @@
-import type { Db } from '@web-starter/db';
+import type { Db } from '@knobs/db';
 import type Stripe from 'stripe';
 
 /**

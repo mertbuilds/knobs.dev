@@ -1,5 +1,5 @@
-import type { Db } from '@web-starter/db';
-import { parseServerEnv } from '@web-starter/env/server';
+import type { Db } from '@knobs/db';
+import { parseServerEnv } from '@knobs/env/server';
 import { describe, expect, it } from 'vitest';
 import { buildServer } from './server.ts';
 

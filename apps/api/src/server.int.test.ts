@@ -1,7 +1,7 @@
+import { router } from '@knobs/api';
+import type { Db } from '@knobs/db';
+import { parseServerEnv, type ServerEnv } from '@knobs/env/server';
 import { call, ORPCError } from '@orpc/server';
-import { router } from '@web-starter/api';
-import type { Db } from '@web-starter/db';
-import { parseServerEnv, type ServerEnv } from '@web-starter/env/server';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, inject, it } from 'vitest';
 import { recordStripeEvent } from './billing/events.ts';

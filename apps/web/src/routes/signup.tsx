@@ -1,13 +1,6 @@
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@knobs/ui';
 import { props } from '@stylexjs/stylex';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@web-starter/ui';
 import { authClient } from '../lib/auth.ts';
 import { serverErrorToFormErrors } from '../lib/errors.ts';
 import { useAppForm } from '../lib/form.tsx';

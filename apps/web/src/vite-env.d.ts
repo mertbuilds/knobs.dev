@@ -1,6 +1,6 @@
 declare module 'virtual:stylex:runtime';
 
-declare module '@web-starter/ui/fonts.css' {
+declare module '@knobs/ui/fonts.css' {
   const css: string;
   export default css;
 }
