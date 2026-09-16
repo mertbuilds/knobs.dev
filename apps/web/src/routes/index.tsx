@@ -3,6 +3,7 @@ import { create, props } from '@stylexjs/stylex';
 import { createFileRoute } from '@tanstack/react-router';
 import { mount, unmount } from 'devknobs';
 import { useEffect } from 'react';
+import { track } from '../lib/analytics.ts';
 import { m } from '../paraglide/messages.js';
 
 export const Route = createFileRoute('/')({
@@ -12,6 +13,10 @@ export const Route = createFileRoute('/')({
 // The one breakpoint on the page. devknobs rewrites `min-width` queries, so the
 // width knob collapses these columns exactly like a real narrow viewport does.
 const WIDE = '@media (min-width: 640px)';
+
+// The devknobs host element. Its shadow root is open, so a click inside the
+// panel still reaches `document` with the real button in its composed path.
+const PANEL = '[data-devknobs="panel"]';
 
 const styles = create({
   blocks: {
@@ -159,6 +164,52 @@ function Snippet({ code, label }: { code: string; label: string }) {
   );
 }
 
+/**
+ * A composed path is a list of `EventTarget`s: the shadow root, `document` and
+ * `window` ride along with the elements. Only the elements answer `matches` and
+ * `closest`, and only they carry a node type of their own.
+ */
+function asElement(node: EventTarget | undefined): Element | null {
+  const element = node as Element | null | undefined;
+  return element?.nodeType === Node.ELEMENT_NODE ? element : null;
+}
+
+/**
+ * Every click on the page, read and reported: the footer links, and which knob
+ * of the demo panel a visitor actually turns. It only observes. No
+ * `preventDefault`, no `stopPropagation`, so the click behaves as it always did.
+ */
+function trackClick(event: MouseEvent) {
+  const path = event.composedPath();
+  const target = asElement(path[0]);
+  if (target === null) {
+    return;
+  }
+  if (path.some((node) => asElement(node)?.matches(PANEL) === true)) {
+    // The geo fields are inputs, not buttons, and a click on the panel's own
+    // chrome hits nothing at all.
+    const control = target.closest('button');
+    if (control === null) {
+      return;
+    }
+    const text = control.textContent?.trim();
+    track('knob_click', {
+      // Every knob button carries its choice as text; the edge tab does not.
+      control:
+        (text === undefined || text === '' ? control.getAttribute('aria-label') : text) ??
+        undefined,
+      // The first `.label` names the group. The tab, replay and reset have none.
+      group: control.closest('.group')?.querySelector('.label')?.textContent?.trim(),
+    });
+    return;
+  }
+  const link = target.closest('a');
+  if (link === null) {
+    return;
+  }
+  track('link_click', { href: link.href, label: link.textContent?.trim() });
+}
+
 function Landing() {
   // The panel is the demo, so it runs here in every environment, not gated on
   // dev the way an app embedding devknobs would gate it. Client-only: `mount`
@@ -167,7 +218,13 @@ function Landing() {
   // covers the hero on a phone.
   useEffect(() => {
     mount({ open: false });
-    return unmount;
+    // One delegated listener for the whole page, panel included. Passive: it
+    // never cancels the click it is reading.
+    document.addEventListener('click', trackClick, { passive: true });
+    return () => {
+      document.removeEventListener('click', trackClick);
+      unmount();
+    };
   }, []);
 
   return (
@@ -223,7 +280,10 @@ function Landing() {
         <a href="https://www.npmjs.com/package/devknobs" {...props(styles.link)}>
           {m.link_npm()}
         </a>
-        <a href="https://mertbuilds.com" {...props(styles.link)}>
+        <a
+          href="https://mertbuilds.com/?utm_source=knobs.dev&utm_medium=referral&utm_campaign=footer"
+          {...props(styles.link)}
+        >
           {m.link_mertbuilds()}
         </a>
       </footer>
