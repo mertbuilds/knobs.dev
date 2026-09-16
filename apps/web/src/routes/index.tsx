@@ -193,7 +193,7 @@ function trackClick(event: MouseEvent) {
       return;
     }
     const text = control.textContent?.trim();
-    track('panel_click', {
+    track('knob_click', {
       // Every knob button carries its choice as text; the edge tab does not.
       control:
         (text === undefined || text === '' ? control.getAttribute('aria-label') : text) ??
