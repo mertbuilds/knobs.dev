@@ -2,13 +2,10 @@ packages:
   - apps/*
   - packages/*
 allowBuilds:
-  '@prisma/engines': set this to true or false
-  '@sentry/cli': set this to true or false
   core-js: false
   cpu-features: false
   esbuild: true
   lefthook: true
-  prisma: set this to true or false
   protobufjs: false
   ssh2: false
   workerd: true
@@ -57,4 +54,4 @@ minimumReleaseAgeExclude:
   - miniflare@5.20260831.0-alpha
   - wrangler@4.128.0
   - '@testing-library/user-event@14.6.7'
-  - devknobs@0.0.1
+  - devknobs@0.0.1 || 0.0.2
