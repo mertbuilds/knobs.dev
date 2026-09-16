@@ -66,7 +66,7 @@ Web app (`apps/web`): `pnpm --filter @knobs/web dev` (:3000 standalone, or portl
 
 ### Analytics
 
-- Self-hosted OpenPanel at `analytics.vinena.studio`. Page views only — `trackOutgoingLinks` and `trackAttributes` are off, and the inline loader in `__root.tsx` skips automated browsers (`navigator.webdriver`).
+- Self-hosted OpenPanel at `analytics.vinena.studio`. Page views plus two click events: `trackOutgoingLinks` and `trackAttributes` stay off, and one delegated `click` listener on `document` (`src/routes/index.tsx`, through `track` in `src/lib/analytics.ts`) sends `link_click` for the footer anchors and `panel_click` for the devknobs panel buttons, read off `composedPath()` because the panel's shadow root is open. The inline loader in `__root.tsx` skips automated browsers (`navigator.webdriver`).
 - The client id comes from `VITE_OPENPANEL_CLIENT_ID`. Unset means the script is never injected. The id is public; the secret half never leaves the analytics host. CI reads the repo variable `OPENPANEL_CLIENT_ID` for production builds, and leaves it unset on PR previews.
 - The OpenPanel project allows `knobs.dev` only, so local events answer `401 Ingestion: Invalid cors or secret` — dev traffic cannot reach the numbers even with the id in `apps/web/.env`. A 401 from `https://knobs.localhost` means the proxy works, not that it is broken.
 - `src/routes/api.op.$.ts` reverse-proxies the vendor so a blocker that knows its host does not drop the page views: `/api/op/op1.js` serves the script, everything else goes to `<host>/api/*`. It forwards `cf-connecting-ip` as `openpanel-client-ip` **and** `x-client-ip` — without those OpenPanel counts every visit as the same device. It answers crawler POSTs with a bare 200 instead of forwarding them.

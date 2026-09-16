@@ -39,5 +39,5 @@
   "limits_body": "container queries, vw units, forced-colors, print, pointer type and network cannot be faked from inside a page. use devtools for those. cross-origin stylesheets keep their real media behaviour.",
   "link_github": "github",
   "link_npm": "npm",
-  "link_mertbuilds": "mert builds"
+  "link_mertbuilds": "mertbuilds.com"
 }
