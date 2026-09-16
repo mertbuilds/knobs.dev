@@ -57,4 +57,4 @@ minimumReleaseAgeExclude:
   - miniflare@5.20260831.0-alpha
   - wrangler@4.128.0
   - '@testing-library/user-event@14.6.7'
-  - devknobs@0.0.1
+  - devknobs@0.0.1 || 0.0.2
