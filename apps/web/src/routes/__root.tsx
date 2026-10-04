@@ -8,7 +8,6 @@ import '@knobs/ui/theme.css';
 import '../app.css';
 
 if (import.meta.env.DEV && typeof window !== 'undefined') {
-  void import('react-grab');
   // Dev-only: StyleX HMR runtime injects styles; production CSS is emitted into app.css at build.
   void import('virtual:stylex:runtime');
 }
