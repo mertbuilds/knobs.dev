@@ -15,12 +15,14 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
 
 /**
  * Loads the analytics through the site's own `/api/op` proxy. Page views only,
- * no link or attribute tracking, and nothing at all from an automated browser.
+ * no link or attribute tracking, and nothing at all from an automated browser
+ * or from the copy of the page devknobs loads in a device's frame, which would
+ * count every device pick as a second page view.
  * Without a client id the script is never injected — analytics is simply off.
  */
 function analyticsScript(clientId: string): string {
   return (
-    'if(!navigator.webdriver){window.op=window.op||function(){(window.op.q=window.op.q||[]).push(arguments)};' +
+    'if(!navigator.webdriver&&window.top===window){window.op=window.op||function(){(window.op.q=window.op.q||[]).push(arguments)};' +
     `window.op('init',{clientId:'${clientId}',apiUrl:'/api/op',trackScreenViews:true,trackOutgoingLinks:false,trackAttributes:false});` +
     "var s=document.createElement('script');s.src='/api/op/op1.js';s.async=true;document.head.appendChild(s)}"
   );

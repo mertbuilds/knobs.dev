@@ -1,8 +1,8 @@
 import { colors, font, radius, spacing } from '@knobs/ui/tokens.stylex';
 import { create, props } from '@stylexjs/stylex';
 import { createFileRoute } from '@tanstack/react-router';
-import { mount, unmount } from 'devknobs';
-import { useEffect } from 'react';
+import { getState, mount, reset, setState, unmount, type DevknobsStatePatch } from 'devknobs';
+import { useEffect, useState } from 'react';
 import { track } from '../lib/analytics.ts';
 import { m } from '../paraglide/messages.js';
 
@@ -10,15 +10,47 @@ export const Route = createFileRoute('/')({
   component: Landing,
 });
 
-// The one breakpoint on the page. devknobs rewrites `min-width` queries, so the
-// width knob collapses these columns exactly like a real narrow viewport does.
+// The one breakpoint on the page. A device or a width puts the page in a frame
+// that size, so these columns collapse the way they do on a real phone.
 const WIDE = '@media (min-width: 640px)';
+
+// Each "try it" button and the knobs it turns, built at click time so the
+// clock counts from the moment of the click.
+const DEMOS = {
+  arabic: () => ({ locale: { dir: 'system', lang: 'ar' } }),
+  iphone: () => ({ device: 'iphone-17-pro' }),
+  pixel: () => ({ device: 'pixel-10' }),
+  // The opposite of the scheme in use, so it shows on either system setting.
+  scheme: () => {
+    const { scheme } = getState();
+    const dark =
+      scheme === 'system' ? matchMedia('(prefers-color-scheme: dark)').matches : scheme === 'dark';
+    return { scheme: dark ? 'light' : 'dark' };
+  },
+  tomorrow: () => {
+    const now = new Date();
+    const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9).getTime();
+    return { clock: { at, mode: 'offset', speed: 1 } };
+  },
+} satisfies Record<string, () => DevknobsStatePatch>;
+
+type Demo = keyof typeof DEMOS | 'reset';
+
+declare global {
+  interface Window {
+    knobsDemo?: (demo: Demo) => void;
+  }
+}
 
 // The devknobs host element. Its shadow root is open, so a click inside the
 // panel still reaches `document` with the real button in its composed path.
 const PANEL = '[data-devknobs="panel"]';
 
 const styles = create({
+  // The feature grid's own row gap, so the line below it reads as a new block.
+  afterFeatures: {
+    marginTop: spacing.s2,
+  },
   blocks: {
     display: 'flex',
     flexDirection: 'column',
@@ -36,6 +68,29 @@ const styles = create({
     overflowX: 'auto',
     padding: spacing.s3,
     whiteSpace: 'pre',
+  },
+  feature: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: spacing.s1,
+  },
+  featureDetail: {
+    color: colors.muted,
+    fontSize: font.sizeSm,
+    margin: 0,
+  },
+  featureName: {
+    fontWeight: font.weightMedium,
+  },
+  features: {
+    columnGap: spacing.s8,
+    display: 'grid',
+    gridTemplateColumns: {
+      default: '1fr',
+      [WIDE]: '1fr 1fr',
+    },
+    margin: 0,
+    rowGap: spacing.s6,
   },
   footer: {
     borderTopColor: colors.border,
@@ -57,28 +112,12 @@ const styles = create({
     alignSelf: 'flex-start',
     maxWidth: '100%',
   },
-  knob: {
+  limits: {
     display: 'flex',
     flexDirection: 'column',
-    gap: spacing.s1,
-  },
-  knobDetail: {
-    color: colors.muted,
-    fontSize: font.sizeSm,
+    gap: spacing.s2,
     margin: 0,
-  },
-  knobName: {
-    fontWeight: font.weightMedium,
-  },
-  knobs: {
-    columnGap: spacing.s8,
-    display: 'grid',
-    gridTemplateColumns: {
-      default: '1fr',
-      [WIDE]: '1fr 1fr',
-    },
-    margin: 0,
-    rowGap: spacing.s6,
+    paddingInlineStart: spacing.s4,
   },
   link: {
     color: {
@@ -126,6 +165,36 @@ const styles = create({
     letterSpacing: '-0.01em',
     margin: 0,
   },
+  seen: {
+    borderColor: colors.border,
+    borderRadius: radius.base,
+    borderStyle: 'solid',
+    borderWidth: 1,
+    columnGap: spacing.s4,
+    display: 'grid',
+    fontSize: font.sizeSm,
+    gridTemplateColumns: 'max-content 1fr',
+    margin: 0,
+    padding: spacing.s3,
+    rowGap: spacing.s1,
+  },
+  seenLabel: {
+    color: colors.muted,
+  },
+  seenTitle: {
+    color: colors.muted,
+    fontSize: font.sizeSm,
+    margin: 0,
+  },
+  seenValue: {
+    fontVariantNumeric: 'tabular-nums',
+    margin: 0,
+    minWidth: 0,
+    overflowWrap: 'anywhere',
+  },
+  self: {
+    alignSelf: 'flex-start',
+  },
   snippet: {
     display: 'flex',
     flexDirection: 'column',
@@ -138,6 +207,33 @@ const styles = create({
   text: {
     margin: 0,
   },
+  tryButton: {
+    backgroundColor: {
+      ':hover': colors.fg,
+      default: colors.bg,
+    },
+    borderColor: colors.fg,
+    borderRadius: radius.base,
+    borderStyle: 'solid',
+    borderWidth: 1,
+    color: {
+      ':hover': colors.bg,
+      default: colors.fg,
+    },
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    fontSize: font.sizeSm,
+    lineHeight: 1.4,
+    paddingBlock: spacing.s2,
+    paddingInline: spacing.s3,
+    transitionDuration: '150ms',
+    transitionProperty: 'background-color, color',
+  },
+  tryButtons: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: spacing.s2,
+  },
   wordmark: {
     fontSize: 19,
     fontWeight: font.weightMedium,
@@ -146,12 +242,115 @@ const styles = create({
   },
 });
 
-function Knob({ detail, name }: { detail: string; name: string }) {
+function Feature({ detail, name }: { detail: string; name: string }) {
   return (
-    <div {...props(styles.knob)}>
-      <dt {...props(styles.knobName)}>{name}</dt>
-      <dd {...props(styles.knobDetail)}>{detail}</dd>
+    <div {...props(styles.feature)}>
+      <dt {...props(styles.featureName)}>{name}</dt>
+      <dd {...props(styles.featureDetail)}>{detail}</dd>
     </div>
+  );
+}
+
+/**
+ * Turns the knobs for one button, through the public API only, and opens the
+ * panel so the visitor sees the row it set and its `×`.
+ */
+function runDemo(demo: Demo) {
+  track('try_click', { demo });
+  if (demo === 'reset') {
+    reset();
+    return;
+  }
+  setState({ ...DEMOS[demo](), panel: { open: true } });
+}
+
+/**
+ * Inside a device's frame this page runs a second time, and the copy of
+ * devknobs there only follows the page above. So a button pressed on the phone
+ * screen hands the click up to the page that owns the panel.
+ */
+function pressDemo(demo: Demo) {
+  let owner: Window['knobsDemo'];
+  try {
+    owner = window.parent === window ? undefined : window.parent.knobsDemo;
+  } catch {
+    // A parent on another origin, such as an embed, answers with an error.
+    owner = undefined;
+  }
+  (owner ?? runDemo)(demo);
+}
+
+function TryButton({ demo, label }: { demo: Demo; label: string }) {
+  return (
+    <button {...props(styles.tryButton)} onClick={() => pressDemo(demo)} type="button">
+      {label}
+    </button>
+  );
+}
+
+type Seen = {
+  language: string;
+  pointer: string;
+  scheme: string;
+  time: string;
+  width: string;
+  zone: string;
+};
+
+/** What the page's own code reads right now, so each knob shows up as a value. */
+function readSeen(): Seen {
+  const format = new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+    weekday: 'short',
+  });
+  return {
+    language: navigator.language,
+    pointer: matchMedia('(pointer: coarse)').matches
+      ? m.seen_pointer_touch()
+      : m.seen_pointer_mouse(),
+    scheme: matchMedia('(prefers-color-scheme: dark)').matches
+      ? m.seen_scheme_dark()
+      : m.seen_scheme_light(),
+    time: format.format(new Date()),
+    width: m.seen_width_value({ width: String(window.innerWidth) }),
+    zone: format.resolvedOptions().timeZone,
+  };
+}
+
+function SeenRow({ label, value }: { label: string; value: string | undefined }) {
+  return (
+    <>
+      <dt {...props(styles.seenLabel)}>{label}</dt>
+      <dd {...props(styles.seenValue)}>{value}</dd>
+    </>
+  );
+}
+
+function SeenList() {
+  // Empty on the server and on the first client render, so hydration matches.
+  const [seen, setSeen] = useState<Seen | null>(null);
+  useEffect(() => {
+    const update = () => setSeen(readSeen());
+    update();
+    const timer = setInterval(update, 1000);
+    window.addEventListener('resize', update);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+  return (
+    <dl {...props(styles.seen)}>
+      <SeenRow label={m.seen_width()} value={seen?.width} />
+      <SeenRow label={m.seen_time()} value={seen?.time} />
+      <SeenRow label={m.seen_zone()} value={seen?.zone} />
+      <SeenRow label={m.seen_language()} value={seen?.language} />
+      <SeenRow label={m.seen_scheme()} value={seen?.scheme} />
+      <SeenRow label={m.seen_pointer()} value={seen?.pointer} />
+    </dl>
   );
 }
 
@@ -186,20 +385,24 @@ function trackClick(event: MouseEvent) {
     return;
   }
   if (path.some((node) => asElement(node)?.matches(PANEL) === true)) {
-    // The geo fields are inputs, not buttons, and a click on the panel's own
-    // chrome hits nothing at all.
-    const control = target.closest('button');
+    // Buttons, and the search results, which are options rather than buttons.
+    // The fields are inputs, and a click on the panel's own chrome hits nothing.
+    const control = target.closest('button, [role="option"]');
     if (control === null) {
       return;
     }
-    const text = control.textContent?.trim();
+    // A row and a result carry their value in a span of its own; the handle,
+    // `×` and the switches carry it as text or an aria-label.
+    const text = (control.querySelector('.row-label, .entry-value') ?? control).textContent?.trim();
     track('knob_click', {
-      // Every knob button carries its choice as text; the edge tab does not.
       control:
         (text === undefined || text === '' ? control.getAttribute('aria-label') : text) ??
         undefined,
-      // The first `.label` names the group. The tab, replay and reset have none.
-      group: control.closest('.group')?.querySelector('.label')?.textContent?.trim(),
+      // The knob inside an open row's editor, or the knob a search result sets.
+      group: (
+        control.closest('.knob')?.querySelector('.knob-label') ??
+        control.querySelector('.entry-knob, .entry-name')
+      )?.textContent?.trim(),
     });
     return;
   }
@@ -214,15 +417,18 @@ function Landing() {
   // The panel is the demo, so it runs here in every environment, not gated on
   // dev the way an app embedding devknobs would gate it. Client-only: `mount`
   // touches `document`, and SSR must never reach it. It starts collapsed to the
-  // edge tab the hero points at, instead of the package default of open, which
-  // covers the hero on a phone.
+  // edge tab the hero points at, and stays open across the reloads the device
+  // and locale knobs cause once a visitor opens it.
   useEffect(() => {
-    mount({ open: false });
+    mount();
+    // The copy of this page inside a device's frame hands its buttons up here.
+    window.knobsDemo = runDemo;
     // One delegated listener for the whole page, panel included. Passive: it
     // never cancels the click it is reading.
     document.addEventListener('click', trackClick, { passive: true });
     return () => {
       document.removeEventListener('click', trackClick);
+      delete window.knobsDemo;
       unmount();
     };
   }, []);
@@ -238,24 +444,41 @@ function Landing() {
 
       <section {...props(styles.section)}>
         <h2 {...props(styles.sectionHeading)}>{m.how_title()}</h2>
-        <p {...props(styles.text)}>{m.how_css()}</p>
-        <p {...props(styles.text)}>{m.how_js()}</p>
+        <p {...props(styles.text)}>{m.how_frame()}</p>
+        <p {...props(styles.text)}>{m.how_patch()}</p>
         <p {...props(styles.text)}>{m.how_setup()}</p>
       </section>
 
       <section {...props(styles.section)}>
-        <h2 {...props(styles.sectionHeading)}>{m.knobs_title()}</h2>
-        <dl {...props(styles.knobs)}>
-          <Knob detail={m.knob_scheme_detail()} name={m.knob_scheme()} />
-          <Knob detail={m.knob_motion_detail()} name={m.knob_motion()} />
-          <Knob detail={m.knob_contrast_detail()} name={m.knob_contrast()} />
-          <Knob detail={m.knob_locale_detail()} name={m.knob_locale()} />
-          <Knob detail={m.knob_geo_detail()} name={m.knob_geo()} />
-          <Knob detail={m.knob_text_detail()} name={m.knob_text()} />
-          <Knob detail={m.knob_width_detail()} name={m.knob_width()} />
-          <Knob detail={m.knob_outlines_detail()} name={m.knob_outlines()} />
-          <Knob detail={m.knob_replay_detail()} name={m.knob_replay()} />
+        <h2 {...props(styles.sectionHeading)}>{m.try_title()}</h2>
+        <p {...props(styles.text)}>{m.try_intro()}</p>
+        <div {...props(styles.tryButtons)}>
+          <TryButton demo="iphone" label={m.try_iphone()} />
+          <TryButton demo="pixel" label={m.try_pixel()} />
+          <TryButton demo="tomorrow" label={m.try_tomorrow()} />
+          <TryButton demo="scheme" label={m.try_scheme()} />
+          <TryButton demo="arabic" label={m.try_arabic()} />
+          <TryButton demo="reset" label={m.try_reset()} />
+        </div>
+        <p {...props(styles.seenTitle)}>{m.seen_title()}</p>
+        <SeenList />
+      </section>
+
+      <section {...props(styles.section)}>
+        <h2 {...props(styles.sectionHeading)}>{m.features_title()}</h2>
+        <dl {...props(styles.features)}>
+          <Feature detail={m.feature_devices_detail()} name={m.feature_devices()} />
+          <Feature detail={m.feature_touch_detail()} name={m.feature_touch()} />
+          <Feature detail={m.feature_grab_detail()} name={m.feature_grab()} />
+          <Feature detail={m.feature_time_detail()} name={m.feature_time()} />
+          <Feature detail={m.feature_language_detail()} name={m.feature_language()} />
+          <Feature detail={m.feature_look_detail()} name={m.feature_look()} />
+          <Feature detail={m.feature_debug_detail()} name={m.feature_debug()} />
         </dl>
+        <p {...props(styles.text, styles.afterFeatures)}>{m.features_panel()}</p>
+        <a href="https://github.com/mertbuilds/devknobs#knobs" {...props(styles.link, styles.self)}>
+          {m.features_readme()}
+        </a>
       </section>
 
       <section {...props(styles.section)}>
@@ -266,11 +489,28 @@ function Landing() {
           <Snippet code={m.usage_react_code()} label={m.usage_react_label()} />
         </div>
         <p {...props(styles.note)}>{m.usage_react_note()}</p>
+        <Snippet code={m.usage_early_code()} label={m.usage_early_label()} />
+        <p {...props(styles.note)}>{m.usage_early_note()}</p>
       </section>
 
       <section {...props(styles.section)}>
         <h2 {...props(styles.sectionHeading)}>{m.limits_title()}</h2>
-        <p {...props(styles.text)}>{m.limits_body()}</p>
+        <ul {...props(styles.limits)}>
+          <li>{m.limits_ua()}</li>
+          <li>{m.limits_touch()}</li>
+          <li>{m.limits_phone()}</li>
+          <li>{m.limits_clock()}</li>
+          <li>{m.limits_devtools()}</li>
+        </ul>
+        <p {...props(styles.note)}>
+          {m.limits_bezels()}{' '}
+          <a
+            href="https://github.com/mertbuilds/devknobs/blob/main/THIRD_PARTY_NOTICES.md"
+            {...props(styles.link)}
+          >
+            {m.limits_bezels_link()}
+          </a>
+        </p>
       </section>
 
       <footer {...props(styles.footer)}>
