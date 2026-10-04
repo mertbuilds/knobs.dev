@@ -1,8 +1,8 @@
 import { colors, font, radius, spacing } from '@knobs/ui/tokens.stylex';
-import { create, props } from '@stylexjs/stylex';
+import { create, props, type StyleXStyles } from '@stylexjs/stylex';
 import { createFileRoute } from '@tanstack/react-router';
 import { getState, mount, reset, setState, unmount, type DevknobsStatePatch } from 'devknobs';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { track } from '../lib/analytics.ts';
 import { m } from '../paraglide/messages.js';
 
@@ -46,6 +46,8 @@ declare global {
 // panel still reaches `document` with the real button in its composed path.
 const PANEL = '[data-devknobs="panel"]';
 
+const NOTICES = 'https://github.com/mertbuilds/devknobs/blob/main/THIRD_PARTY_NOTICES.md';
+
 const styles = create({
   // The feature grid's own row gap, so the line below it reads as a new block.
   afterFeatures: {
@@ -57,17 +59,46 @@ const styles = create({
     gap: spacing.s6,
   },
   code: {
+    alignItems: 'flex-start',
     borderColor: colors.border,
     borderRadius: radius.base,
     borderStyle: 'solid',
     borderWidth: 1,
+    columnGap: spacing.s3,
+    display: 'flex',
+    padding: spacing.s3,
+  },
+  codeText: {
+    flexGrow: 1,
     fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
     fontSize: 13,
     lineHeight: 1.7,
     margin: 0,
+    minWidth: 0,
     overflowX: 'auto',
-    padding: spacing.s3,
     whiteSpace: 'pre',
+  },
+  copy: {
+    backgroundColor: 'transparent',
+    borderRadius: radius.base,
+    borderStyle: 'none',
+    color: {
+      ':hover': colors.fg,
+      default: colors.muted,
+    },
+    cursor: 'pointer',
+    flexShrink: 0,
+    fontFamily: 'inherit',
+    fontSize: 13,
+    lineHeight: 1.7,
+    outlineColor: colors.fg,
+    outlineOffset: 2,
+    outlineStyle: {
+      ':focus-visible': 'solid',
+      default: 'none',
+    },
+    outlineWidth: 2,
+    padding: 0,
   },
   feature: {
     display: 'flex',
@@ -128,6 +159,15 @@ const styles = create({
     textUnderlineOffset: '3px',
     transitionDuration: '150ms',
     transitionProperty: 'color',
+  },
+  // Read by screen readers, never drawn.
+  live: {
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    whiteSpace: 'nowrap',
+    width: 1,
   },
   note: {
     color: colors.muted,
@@ -354,11 +394,72 @@ function SeenList() {
   );
 }
 
-function Snippet({ code, label }: { code: string; label: string }) {
+/**
+ * A code box with a copy button at its right edge. The code stays plain text,
+ * selectable by hand. Where the clipboard refuses the write (an insecure
+ * context, an old browser), the code is selected instead, ready to copy.
+ */
+function CodeBox({
+  code,
+  copyLabel,
+  name,
+  style,
+}: {
+  code: string;
+  copyLabel: string;
+  name: string;
+  style?: StyleXStyles;
+}) {
+  const [copied, setCopied] = useState(false);
+  const text = useRef<HTMLPreElement>(null);
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+  const copy = () => {
+    track('copy_click', { snippet: name });
+    navigator.clipboard.writeText(code).then(
+      () => setCopied(true),
+      () => {
+        if (text.current !== null) {
+          getSelection()?.selectAllChildren(text.current);
+        }
+      },
+    );
+  };
+  return (
+    <div {...props(styles.code, style)}>
+      <pre {...props(styles.codeText)} ref={text}>
+        {code}
+      </pre>
+      <button {...props(styles.copy)} aria-label={copyLabel} onClick={copy} type="button">
+        {copied ? m.copy_done() : m.copy_action()}
+      </button>
+      <span {...props(styles.live)} aria-live="polite">
+        {copied ? m.copy_done() : ''}
+      </span>
+    </div>
+  );
+}
+
+function Snippet({
+  code,
+  copyLabel,
+  label,
+  name,
+}: {
+  code: string;
+  copyLabel: string;
+  label: string;
+  name: string;
+}) {
   return (
     <div {...props(styles.snippet)}>
       <span {...props(styles.snippetLabel)}>{label}</span>
-      <pre {...props(styles.code)}>{code}</pre>
+      <CodeBox code={code} copyLabel={copyLabel} name={name} />
     </div>
   );
 }
@@ -438,7 +539,12 @@ function Landing() {
       <header {...props(styles.section)}>
         <h1 {...props(styles.wordmark)}>{m.app_name()}</h1>
         <p {...props(styles.text)}>{m.tagline()}</p>
-        <pre {...props(styles.code, styles.installCode)}>{m.install_command()}</pre>
+        <CodeBox
+          code={m.install_command()}
+          copyLabel={m.copy_install()}
+          name="install"
+          style={styles.installCode}
+        />
         <p {...props(styles.hint)}>{m.hero_hint()}</p>
       </header>
 
@@ -465,11 +571,57 @@ function Landing() {
       </section>
 
       <section {...props(styles.section)}>
+        <h2 {...props(styles.sectionHeading)}>{m.grab_title()}</h2>
+        <p {...props(styles.text)}>{m.grab_intro()}</p>
+        <p {...props(styles.text)}>{m.grab_try()}</p>
+        <Snippet
+          code={m.grab_example_code()}
+          copyLabel={m.copy_grab_example()}
+          label={m.grab_example_label()}
+          name="grab_example"
+        />
+        <p {...props(styles.text)}>{m.grab_context()}</p>
+        <ul {...props(styles.limits)}>
+          <li>{m.grab_key_copy()}</li>
+          <li>{m.grab_key_arrows()}</li>
+          <li>{m.grab_key_shift()}</li>
+          <li>{m.grab_key_escape()}</li>
+        </ul>
+        <p {...props(styles.text)}>{m.grab_lines()}</p>
+        <p {...props(styles.text)}>{m.grab_frame()}</p>
+        <p {...props(styles.text)}>{m.grab_replace()}</p>
+        <Snippet
+          code={m.grab_api_code()}
+          copyLabel={m.copy_grab_api()}
+          label={m.grab_api_label()}
+          name="grab_api"
+        />
+        <p {...props(styles.note)}>
+          {m.grab_credit_built()}{' '}
+          <a href="https://github.com/aidenybai/react-grab" {...props(styles.link)}>
+            {m.grab_credit_react_grab()}
+          </a>{' '}
+          {m.grab_credit_by()}{' '}
+          <a href="https://github.com/aidenybai/bippy" {...props(styles.link)}>
+            {m.grab_credit_bippy()}
+          </a>
+          {', '}
+          {m.grab_credit_carries()}{' '}
+          <a href="https://github.com/jridgewell/sourcemaps" {...props(styles.link)}>
+            {m.grab_credit_sourcemap()}
+          </a>{' '}
+          {m.grab_credit_end()}{' '}
+          <a href={NOTICES} {...props(styles.link)}>
+            {m.grab_credit_notices()}
+          </a>
+        </p>
+      </section>
+
+      <section {...props(styles.section)}>
         <h2 {...props(styles.sectionHeading)}>{m.features_title()}</h2>
         <dl {...props(styles.features)}>
           <Feature detail={m.feature_devices_detail()} name={m.feature_devices()} />
           <Feature detail={m.feature_touch_detail()} name={m.feature_touch()} />
-          <Feature detail={m.feature_grab_detail()} name={m.feature_grab()} />
           <Feature detail={m.feature_time_detail()} name={m.feature_time()} />
           <Feature detail={m.feature_language_detail()} name={m.feature_language()} />
           <Feature detail={m.feature_look_detail()} name={m.feature_look()} />
@@ -484,12 +636,32 @@ function Landing() {
       <section {...props(styles.section)}>
         <h2 {...props(styles.sectionHeading)}>{m.usage_title()}</h2>
         <div {...props(styles.blocks)}>
-          <Snippet code={m.usage_script_code()} label={m.usage_script_label()} />
-          <Snippet code={m.usage_import_code()} label={m.usage_import_label()} />
-          <Snippet code={m.usage_react_code()} label={m.usage_react_label()} />
+          <Snippet
+            code={m.usage_script_code()}
+            copyLabel={m.copy_script()}
+            label={m.usage_script_label()}
+            name="script"
+          />
+          <Snippet
+            code={m.usage_import_code()}
+            copyLabel={m.copy_import()}
+            label={m.usage_import_label()}
+            name="import"
+          />
+          <Snippet
+            code={m.usage_react_code()}
+            copyLabel={m.copy_react()}
+            label={m.usage_react_label()}
+            name="react"
+          />
         </div>
         <p {...props(styles.note)}>{m.usage_react_note()}</p>
-        <Snippet code={m.usage_early_code()} label={m.usage_early_label()} />
+        <Snippet
+          code={m.usage_early_code()}
+          copyLabel={m.copy_early()}
+          label={m.usage_early_label()}
+          name="early"
+        />
         <p {...props(styles.note)}>{m.usage_early_note()}</p>
       </section>
 
@@ -504,10 +676,7 @@ function Landing() {
         </ul>
         <p {...props(styles.note)}>
           {m.limits_bezels()}{' '}
-          <a
-            href="https://github.com/mertbuilds/devknobs/blob/main/THIRD_PARTY_NOTICES.md"
-            {...props(styles.link)}
-          >
+          <a href={NOTICES} {...props(styles.link)}>
             {m.limits_bezels_link()}
           </a>
         </p>
