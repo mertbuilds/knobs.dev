@@ -2,8 +2,23 @@ import { colors, font, radius, spacing } from '@knobs/ui/tokens.stylex';
 import { create, props, type StyleXStyles } from '@stylexjs/stylex';
 import { createFileRoute } from '@tanstack/react-router';
 import { getState, mount, reset, setState, unmount, type DevknobsStatePatch } from 'devknobs';
+import {
+  ArrowUpRightIcon,
+  BugIcon,
+  CheckIcon,
+  ClockIcon,
+  CopyIcon,
+  CrosshairIcon,
+  LanguagesIcon,
+  PointerIcon,
+  RotateCcwIcon,
+  SmartphoneIcon,
+  SunMoonIcon,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { track } from '../lib/analytics.ts';
+import { GitHubMark, NpmMark } from '../lib/brand-marks.tsx';
 import { m } from '../paraglide/messages.js';
 
 export const Route = createFileRoute('/')({
@@ -78,7 +93,14 @@ const styles = create({
     overflowX: 'auto',
     whiteSpace: 'pre',
   },
+  // A long single line, such as a grab line, breaks instead of scrolling.
+  codeWrap: {
+    overflowWrap: 'anywhere',
+    whiteSpace: 'pre-wrap',
+  },
+  // As tall as one line of code, so the icon sits on the first line.
   copy: {
+    alignItems: 'center',
     backgroundColor: 'transparent',
     borderRadius: radius.base,
     borderStyle: 'none',
@@ -87,10 +109,10 @@ const styles = create({
       default: colors.muted,
     },
     cursor: 'pointer',
+    display: 'flex',
     flexShrink: 0,
-    fontFamily: 'inherit',
-    fontSize: 13,
-    lineHeight: 1.7,
+    height: 22,
+    justifyContent: 'center',
     outlineColor: colors.fg,
     outlineOffset: 2,
     outlineStyle: {
@@ -99,6 +121,7 @@ const styles = create({
     },
     outlineWidth: 2,
     padding: 0,
+    width: 22,
   },
   feature: {
     display: 'flex',
@@ -274,6 +297,12 @@ const styles = create({
     flexWrap: 'wrap',
     gap: spacing.s2,
   },
+  // An icon beside its label, centered on the line, a fixed gap apart.
+  withIcon: {
+    alignItems: 'center',
+    columnGap: spacing.s2,
+    display: 'inline-flex',
+  },
   wordmark: {
     fontSize: 19,
     fontWeight: font.weightMedium,
@@ -282,10 +311,16 @@ const styles = create({
   },
 });
 
-function Feature({ detail, name }: { detail: string; name: string }) {
+// One icon size and stroke for the page, so they sit with its regular weight.
+const ICON = { 'aria-hidden': true, size: 16, strokeWidth: 1.5 } as const;
+
+function Feature({ detail, icon: Icon, name }: { detail: string; icon: LucideIcon; name: string }) {
   return (
     <div {...props(styles.feature)}>
-      <dt {...props(styles.featureName)}>{name}</dt>
+      <dt {...props(styles.featureName, styles.withIcon)}>
+        <Icon {...ICON} />
+        {name}
+      </dt>
       <dd {...props(styles.featureDetail)}>{detail}</dd>
     </div>
   );
@@ -320,9 +355,14 @@ function pressDemo(demo: Demo) {
   (owner ?? runDemo)(demo);
 }
 
-function TryButton({ demo, label }: { demo: Demo; label: string }) {
+function TryButton({ demo, icon: Icon, label }: { demo: Demo; icon: LucideIcon; label: string }) {
   return (
-    <button {...props(styles.tryButton)} onClick={() => pressDemo(demo)} type="button">
+    <button
+      {...props(styles.tryButton, styles.withIcon)}
+      onClick={() => pressDemo(demo)}
+      type="button"
+    >
+      <Icon {...ICON} />
       {label}
     </button>
   );
@@ -404,11 +444,13 @@ function CodeBox({
   copyLabel,
   name,
   style,
+  wrap = false,
 }: {
   code: string;
   copyLabel: string;
   name: string;
   style?: StyleXStyles;
+  wrap?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const text = useRef<HTMLPreElement>(null);
@@ -432,11 +474,11 @@ function CodeBox({
   };
   return (
     <div {...props(styles.code, style)}>
-      <pre {...props(styles.codeText)} ref={text}>
+      <pre {...props(styles.codeText, wrap && styles.codeWrap)} ref={text}>
         {code}
       </pre>
       <button {...props(styles.copy)} aria-label={copyLabel} onClick={copy} type="button">
-        {copied ? m.copy_done() : m.copy_action()}
+        {copied ? <CheckIcon {...ICON} /> : <CopyIcon {...ICON} />}
       </button>
       <span {...props(styles.live)} aria-live="polite">
         {copied ? m.copy_done() : ''}
@@ -450,16 +492,18 @@ function Snippet({
   copyLabel,
   label,
   name,
+  wrap = false,
 }: {
   code: string;
   copyLabel: string;
   label: string;
   name: string;
+  wrap?: boolean;
 }) {
   return (
     <div {...props(styles.snippet)}>
       <span {...props(styles.snippetLabel)}>{label}</span>
-      <CodeBox code={code} copyLabel={copyLabel} name={name} />
+      <CodeBox code={code} copyLabel={copyLabel} name={name} wrap={wrap} />
     </div>
   );
 }
@@ -559,19 +603,22 @@ function Landing() {
         <h2 {...props(styles.sectionHeading)}>{m.try_title()}</h2>
         <p {...props(styles.text)}>{m.try_intro()}</p>
         <div {...props(styles.tryButtons)}>
-          <TryButton demo="iphone" label={m.try_iphone()} />
-          <TryButton demo="pixel" label={m.try_pixel()} />
-          <TryButton demo="tomorrow" label={m.try_tomorrow()} />
-          <TryButton demo="scheme" label={m.try_scheme()} />
-          <TryButton demo="arabic" label={m.try_arabic()} />
-          <TryButton demo="reset" label={m.try_reset()} />
+          <TryButton demo="iphone" icon={SmartphoneIcon} label={m.try_iphone()} />
+          <TryButton demo="pixel" icon={SmartphoneIcon} label={m.try_pixel()} />
+          <TryButton demo="tomorrow" icon={ClockIcon} label={m.try_tomorrow()} />
+          <TryButton demo="scheme" icon={SunMoonIcon} label={m.try_scheme()} />
+          <TryButton demo="arabic" icon={LanguagesIcon} label={m.try_arabic()} />
+          <TryButton demo="reset" icon={RotateCcwIcon} label={m.try_reset()} />
         </div>
         <p {...props(styles.seenTitle)}>{m.seen_title()}</p>
         <SeenList />
       </section>
 
       <section {...props(styles.section)}>
-        <h2 {...props(styles.sectionHeading)}>{m.grab_title()}</h2>
+        <h2 {...props(styles.sectionHeading, styles.withIcon)}>
+          <CrosshairIcon {...ICON} />
+          {m.grab_title()}
+        </h2>
         <p {...props(styles.text)}>{m.grab_intro()}</p>
         <p {...props(styles.text)}>{m.grab_try()}</p>
         <Snippet
@@ -579,6 +626,7 @@ function Landing() {
           copyLabel={m.copy_grab_example()}
           label={m.grab_example_label()}
           name="grab_example"
+          wrap
         />
         <p {...props(styles.text)}>{m.grab_context()}</p>
         <ul {...props(styles.limits)}>
@@ -620,16 +668,28 @@ function Landing() {
       <section {...props(styles.section)}>
         <h2 {...props(styles.sectionHeading)}>{m.features_title()}</h2>
         <dl {...props(styles.features)}>
-          <Feature detail={m.feature_devices_detail()} name={m.feature_devices()} />
-          <Feature detail={m.feature_touch_detail()} name={m.feature_touch()} />
-          <Feature detail={m.feature_time_detail()} name={m.feature_time()} />
-          <Feature detail={m.feature_language_detail()} name={m.feature_language()} />
-          <Feature detail={m.feature_look_detail()} name={m.feature_look()} />
-          <Feature detail={m.feature_debug_detail()} name={m.feature_debug()} />
+          <Feature
+            detail={m.feature_devices_detail()}
+            icon={SmartphoneIcon}
+            name={m.feature_devices()}
+          />
+          <Feature detail={m.feature_touch_detail()} icon={PointerIcon} name={m.feature_touch()} />
+          <Feature detail={m.feature_time_detail()} icon={ClockIcon} name={m.feature_time()} />
+          <Feature
+            detail={m.feature_language_detail()}
+            icon={LanguagesIcon}
+            name={m.feature_language()}
+          />
+          <Feature detail={m.feature_look_detail()} icon={SunMoonIcon} name={m.feature_look()} />
+          <Feature detail={m.feature_debug_detail()} icon={BugIcon} name={m.feature_debug()} />
         </dl>
         <p {...props(styles.text, styles.afterFeatures)}>{m.features_panel()}</p>
-        <a href="https://github.com/mertbuilds/devknobs#knobs" {...props(styles.link, styles.self)}>
+        <a
+          href="https://github.com/mertbuilds/devknobs#knobs"
+          {...props(styles.link, styles.self, styles.withIcon)}
+        >
           {m.features_readme()}
+          <ArrowUpRightIcon {...ICON} />
         </a>
       </section>
 
@@ -683,10 +743,12 @@ function Landing() {
       </section>
 
       <footer {...props(styles.footer)}>
-        <a href="https://github.com/mertbuilds/devknobs" {...props(styles.link)}>
+        <a href="https://github.com/mertbuilds/devknobs" {...props(styles.link, styles.withIcon)}>
+          <GitHubMark />
           {m.link_github()}
         </a>
-        <a href="https://www.npmjs.com/package/devknobs" {...props(styles.link)}>
+        <a href="https://www.npmjs.com/package/devknobs" {...props(styles.link, styles.withIcon)}>
+          <NpmMark />
           {m.link_npm()}
         </a>
         <a
