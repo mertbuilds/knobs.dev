@@ -63,7 +63,7 @@
   "seen_pointer_mouse": "mouse",
   "grab_title": "Grab an element for your coding agent",
   "grab_intro": "Hold [[⌘C]] ([[Ctrl+C]] off a Mac) and point at the page. A box sits on the element under the pointer, with a label that shows its tag and its React component. Click, and the element goes to your clipboard. A check and \"Copied\" show next to it.",
-  "grab_try": "Try it here: hold [[⌘C]], point at the knobs headline at the top of this page, click, then paste.",
+  "grab_try": "Try it here: hold [[⌘C]], point at the knobs headline at the top of this page, click, then paste. This live site runs React's production build, so here the line names short, minified components and a selector. In your own dev server you get files and lines, like this:",
   "grab_demo_tag": "h1",
   "grab_demo_component": "Landing",
   "grab_example_label": "What the clipboard gets for that headline, with this site running in development",
