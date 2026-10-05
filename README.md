@@ -51,12 +51,10 @@ Local URLs come from [portless](https://portless.sh): stable named HTTPS domains
 | `pnpm typecheck`    | `tsc --noEmit` per package                                         |
 | `pnpm build`        | turbo build (the Workers bundle for `apps/web`)                    |
 | `pnpm storybook`    | Component workshop (standalone, :6006)                             |
-| `pnpm fonts`        | Fetch Suisse Intl from private bucket (Inter fallback otherwise)   |
 | `pnpm bad-day`      | Nuke node_modules + all caches, reinstall (`DRY_RUN=1` to preview) |
 | `pnpm skills:check` | Warn when dep majors drift from verified agent skills              |
 
-**Fonts.** Suisse Intl is licensed and not in the repo. Without
-`packages/ui/fonts/*.woff2` the site falls back to Inter and everything else works.
+**Fonts.** None ship. The site uses the devknobs panel's system font stack.
 
 **Env.** Every var is optional: the site runs with no `.env` at all, just without analytics.
 
@@ -69,6 +67,5 @@ main does the same from CI.
 - [ ] **Custom domains**: `knobs.dev` and `www.knobs.dev` attached to the `knobs-web` Worker
 - [ ] **OpenPanel**: repo variable `OPENPANEL_CLIENT_ID` (public project id); without it production ships without analytics
 - [ ] **Axiom**: dataset + token as Worker secrets (`AXIOM_TOKEN`, `AXIOM_DATASET`) for the evlog drain
-- [ ] **Suisse Intl bucket**: `FONT_BUCKET_URL` secret (private R2); Inter ships as fallback
 - [ ] **Branch protection**: PRs only, CI required on `main`
 - [ ] **Turbo remote cache** (optional): `TURBO_TOKEN` secret + `TURBO_TEAM` var

@@ -3,7 +3,6 @@ import { useEffect, type ReactNode } from 'react';
 import { clientEnv } from '../lib/env.ts';
 import { m } from '../paraglide/messages.js';
 import { getLocale } from '../paraglide/runtime.js';
-import '@knobs/ui/fonts.css';
 import '@knobs/ui/theme.css';
 import '../app.css';
 

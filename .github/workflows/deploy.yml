@@ -19,10 +19,6 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Fetch Suisse Intl from R2
-        run: pnpm fonts
-        env:
-          FONT_BUCKET_URL: ${{ secrets.FONT_BUCKET_URL }}
       - name: Build and deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         env:

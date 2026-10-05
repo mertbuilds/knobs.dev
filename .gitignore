@@ -23,8 +23,5 @@ apps/web/src/paraglide/
 apps/web/src/routeTree.gen.ts
 apps/web/worker-configuration.d.ts
 
-# licensed fonts — fetched by scripts/fetch-fonts.sh, never committed
-packages/ui/fonts/*.woff2
-
 # os
 .DS_Store

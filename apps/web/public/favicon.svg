@@ -2,7 +2,7 @@
   <style>
     text {
       fill: #000000;
-      font-family: 'Suisse Intl', 'Inter Variable', system-ui, sans-serif;
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       font-size: 26px;
       font-weight: 500;
     }
