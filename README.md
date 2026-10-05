@@ -6,21 +6,21 @@ A copy of [mertbuilds/web-starter](https://github.com/mertbuilds/web-starter) wi
 landing page does not need taken out: no api, no database, no auth, no billing, no e2e. What is
 left is a TanStack Start app on Cloudflare Workers, the StyleX component package behind it, and
 the tooling that keeps both honest. The founding stack decisions are in
-[docs/adr/0001-stack.md](docs/adr/0001-stack.md) — that record covers the whole boilerplate, and
+[docs/adr/0001-stack.md](docs/adr/0001-stack.md): that record covers the whole boilerplate, and
 this repo keeps only the web half. Agent rules and workflow live in [AGENTS.md](AGENTS.md).
 
 ## Stack
 
-| Layer       | Choice                                                                   |
-| ----------- | ------------------------------------------------------------------------ |
-| Monorepo    | pnpm workspaces + Turborepo, Node 24, TypeScript 7                       |
-| Web         | TanStack Start (React 19 + Compiler) → Cloudflare Workers                |
-| Styling     | StyleX tokens (black/white, 4px radius) + Base UI components + Storybook |
-| i18n        | Paraglide v2 (en only)                                                   |
-| Analytics   | Self-hosted OpenPanel, page views only, `/api/op` reverse proxy          |
-| Logging     | evlog wide events to an Axiom drain                                      |
-| Lint/format | oxlint (`@nkzw/oxlint-config`, type-aware) + oxfmt — no ESLint/Prettier  |
-| Tests       | Vitest, Storybook stories as tests in real Chromium                      |
+| Layer       | Choice                                                                 |
+| ----------- | ---------------------------------------------------------------------- |
+| Monorepo    | pnpm workspaces + Turborepo, Node 24, TypeScript 7                     |
+| Web         | TanStack Start (React 19 + Compiler) → Cloudflare Workers              |
+| Styling     | StyleX tokens (the devknobs panel's) + Base UI components + Storybook  |
+| i18n        | Paraglide v2 (en only)                                                 |
+| Analytics   | Self-hosted OpenPanel, page views only, `/api/op` reverse proxy        |
+| Logging     | evlog wide events to an Axiom drain                                    |
+| Lint/format | oxlint (`@nkzw/oxlint-config`, type-aware) + oxfmt, no ESLint/Prettier |
+| Tests       | Vitest, Storybook stories as tests in real Chromium                    |
 
 ## Develop
 
@@ -33,7 +33,7 @@ sudo pnpm exec portless proxy start --https   # one-time: local HTTPS proxy on 4
 pnpm dev                                      # mprocs: web + storybook
 ```
 
-Local URLs come from [portless](https://portless.sh) — stable named HTTPS domains instead of ports:
+Local URLs come from [portless](https://portless.sh): stable named HTTPS domains instead of ports:
 
 | Service   | URL                               |
 | --------- | --------------------------------- |
@@ -51,24 +51,21 @@ Local URLs come from [portless](https://portless.sh) — stable named HTTPS doma
 | `pnpm typecheck`    | `tsc --noEmit` per package                                         |
 | `pnpm build`        | turbo build (the Workers bundle for `apps/web`)                    |
 | `pnpm storybook`    | Component workshop (standalone, :6006)                             |
-| `pnpm fonts`        | Fetch Suisse Intl from private bucket (Inter fallback otherwise)   |
 | `pnpm bad-day`      | Nuke node_modules + all caches, reinstall (`DRY_RUN=1` to preview) |
 | `pnpm skills:check` | Warn when dep majors drift from verified agent skills              |
 
-**Fonts.** Suisse Intl is licensed and not in the repo. Without
-`packages/ui/fonts/*.woff2` the site falls back to Inter and everything else works.
+**Fonts.** None ship. The site uses the devknobs panel's system font stack.
 
-**Env.** Every var is optional — the site runs with no `.env` at all, just without analytics.
+**Env.** Every var is optional: the site runs with no `.env` at all, just without analytics.
 
 **Deploy.** `pnpm --filter @knobs/web deploy` builds and ships to Cloudflare Workers; a push to
 main does the same from CI.
 
-## Going to production — accounts checklist
+## Going to production: accounts checklist
 
-- [ ] **Cloudflare** — Workers; secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` in GitHub
-- [ ] **Custom domains** — `knobs.dev` and `www.knobs.dev` attached to the `knobs-web` Worker
-- [ ] **OpenPanel** — repo variable `OPENPANEL_CLIENT_ID` (public project id); without it production ships without analytics
-- [ ] **Axiom** — dataset + token as Worker secrets (`AXIOM_TOKEN`, `AXIOM_DATASET`) for the evlog drain
-- [ ] **Suisse Intl bucket** — `FONT_BUCKET_URL` secret (private R2); Inter ships as fallback
-- [ ] **Branch protection** — PRs only, CI required on `main`
-- [ ] **Turbo remote cache** (optional) — `TURBO_TOKEN` secret + `TURBO_TEAM` var
+- [ ] **Cloudflare**: Workers; secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` in GitHub
+- [ ] **Custom domains**: `knobs.dev` and `www.knobs.dev` attached to the `knobs-web` Worker
+- [ ] **OpenPanel**: repo variable `OPENPANEL_CLIENT_ID` (public project id); without it production ships without analytics
+- [ ] **Axiom**: dataset + token as Worker secrets (`AXIOM_TOKEN`, `AXIOM_DATASET`) for the evlog drain
+- [ ] **Branch protection**: PRs only, CI required on `main`
+- [ ] **Turbo remote cache** (optional): `TURBO_TOKEN` secret + `TURBO_TEAM` var

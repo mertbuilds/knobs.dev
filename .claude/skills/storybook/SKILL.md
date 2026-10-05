@@ -29,7 +29,7 @@ Always pass `?renderer=react&language=ts` — this repo is React + TS.
 - https://storybook.js.org/docs/writing-tests/integrations/vitest-addon.md?renderer=react&language=ts — addon-vitest setup (our `vitest.config.ts` uses storybookTest plugin + browser mode)
 - https://storybook.js.org/docs/writing-stories/decorators.md?renderer=react&language=ts — decorators
 - https://storybook.js.org/docs/api/main-config/main-config.md?renderer=react&language=ts — `.storybook/main.ts` (we add StyleX via `viteFinal` + `@stylexjs/unplugin`)
-- https://storybook.js.org/docs/configure/styling-and-css.md?renderer=react&language=ts — CSS/fonts in preview (we import `fonts.css` + StyleX output in `.storybook/preview.ts`)
+- https://storybook.js.org/docs/configure/styling-and-css.md?renderer=react&language=ts — CSS/fonts in preview (we import `theme.css` + StyleX output in `.storybook/preview.ts`)
 - https://storybook.js.org/docs/get-started/frameworks/react-vite.md?renderer=react&language=ts — framework config
 
 ## Repo conventions

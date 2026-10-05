@@ -64,4 +64,4 @@ export {
   TableHeader,
   TableRow,
 } from './ui/table.tsx';
-export { colors, font, palette, radius, spacing } from './tokens.stylex.ts';
+export { colors, font, palette, radius, shadow, spacing } from './tokens.stylex.ts';

@@ -14,7 +14,7 @@ apps/web/.tanstack/
 coverage/
 *.tsbuildinfo
 
-# env — only the example is committed
+# env: only the example is committed
 .env*
 !.env.example
 
@@ -22,9 +22,6 @@ coverage/
 apps/web/src/paraglide/
 apps/web/src/routeTree.gen.ts
 apps/web/worker-configuration.d.ts
-
-# licensed fonts — fetched by scripts/fetch-fonts.sh, never committed
-packages/ui/fonts/*.woff2
 
 # os
 .DS_Store

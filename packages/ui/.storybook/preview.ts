@@ -1,6 +1,4 @@
 import type { Preview } from '@storybook/react-vite';
-import '@fontsource-variable/inter';
-import '../src/fonts.css';
 import '../src/theme.css';
 import './preview.css';
 
