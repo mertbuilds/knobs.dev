@@ -3,31 +3,57 @@ import { defineVars } from '@stylexjs/stylex';
 const DARK = '@media (prefers-color-scheme: dark)';
 
 /**
- * Raw palette. Black, white, and three grays. Do not use these directly in
- * components — use the semantic `colors` vars below so dark mode keeps working.
+ * The devknobs panel's own palette (its `styles.ts`), so the site and the
+ * panel on it look like one thing. Warm neutrals that follow the visitor's
+ * scheme the way the panel does. Do not use these directly in components:
+ * use the semantic `colors` vars below so dark mode keeps working.
  */
 export const palette = defineVars({
-  black: '#000000',
-  gray300: '#d4d4d4',
-  gray500: '#8a8a8a',
-  gray700: '#3f3f3f',
-  white: '#ffffff',
+  ink: '#1b1b19',
+  inkDark: '#e9e9e3',
+  paper: '#fbfbf9',
+  paperDark: '#151513',
 });
 
-/** Semantic colors. Flip automatically with the system color scheme. */
+/**
+ * Semantic colors, each the panel's value of the same name in light and dark.
+ * `muted` is the panel's `--faint`, a step darker in light so small text on a
+ * `card` keeps 4.5:1. `accent` is grab's blue.
+ */
 export const colors = defineVars({
-  bg: { [DARK]: '#000000', default: '#ffffff' },
-  border: { [DARK]: '#3f3f3f', default: '#d4d4d4' },
-  disabled: { [DARK]: '#8a8a8a', default: '#8a8a8a' },
-  error: { [DARK]: '#f87171', default: '#dc2626' },
-  fg: { [DARK]: '#ffffff', default: '#000000' },
-  muted: { [DARK]: '#8a8a8a', default: '#8a8a8a' },
+  accent: 'rgb(41, 151, 255)',
+  bg: { [DARK]: '#151513', default: '#fbfbf9' },
+  border: { [DARK]: '#2b2b28', default: '#e6e6e0' },
+  card: { [DARK]: '#1f1f1c', default: '#f1f1ec' },
+  disabled: { [DARK]: '#8c8c85', default: '#8c8c85' },
+  error: { [DARK]: '#ff6369', default: '#e5484d' },
+  fg: { [DARK]: '#e9e9e3', default: '#1b1b19' },
+  // grab's label bar, which is dark on a light page and light on a dark one.
+  grabBar: { [DARK]: '#ffffff', default: '#161616' },
+  grabBarText: { [DARK]: '#171717', default: '#ffffff' },
+  grabTag: { [DARK]: '#737373', default: '#a7a7a7' },
+  muted: { [DARK]: '#8c8c85', default: '#696963' },
+  raised: { [DARK]: '#383833', default: '#ffffff' },
+  track: { [DARK]: '#0f0f0e', default: '#e6e6e0' },
   warning: { [DARK]: '#fbbf24', default: '#d97706' },
 });
 
-/** Single radius token. 4px everywhere. */
+/** The panel's lift under a raised chip: a hairline shadow in light, none in dark. */
+export const shadow = defineVars({
+  lift: { [DARK]: 'none', default: '0 1px 2px rgb(0 0 0 / 0.1)' },
+});
+
+/**
+ * The panel's concentric radii: 13 for a panel, 8 for what sits 4 inside it
+ * (rows, fields), 4 for controls, 2 for what sits 2 inside a control. `bar`
+ * is grab's label bar.
+ */
 export const radius = defineVars({
+  bar: '6px',
   base: '4px',
+  inner: '2px',
+  panel: '13px',
+  row: '8px',
 });
 
 /** 4px spacing scale. */
@@ -42,11 +68,14 @@ export const spacing = defineVars({
   s8: '32px',
 });
 
+/** The panel's system stack, and the monospace its readout strip uses. */
 export const font = defineVars({
-  family: "'Suisse Intl', 'Inter Variable', system-ui, sans-serif",
+  family: "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+  mono: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
   sizeLg: '20px',
   sizeMd: '16px',
   sizeSm: '14px',
+  sizeXs: '12px',
   weightBold: '700',
   weightMedium: '500',
   weightRegular: '400',

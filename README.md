@@ -11,16 +11,16 @@ this repo keeps only the web half. Agent rules and workflow live in [AGENTS.md](
 
 ## Stack
 
-| Layer       | Choice                                                                   |
-| ----------- | ------------------------------------------------------------------------ |
-| Monorepo    | pnpm workspaces + Turborepo, Node 24, TypeScript 7                       |
-| Web         | TanStack Start (React 19 + Compiler) → Cloudflare Workers                |
-| Styling     | StyleX tokens (black/white, 4px radius) + Base UI components + Storybook |
-| i18n        | Paraglide v2 (en only)                                                   |
-| Analytics   | Self-hosted OpenPanel, page views only, `/api/op` reverse proxy          |
-| Logging     | evlog wide events to an Axiom drain                                      |
-| Lint/format | oxlint (`@nkzw/oxlint-config`, type-aware) + oxfmt — no ESLint/Prettier  |
-| Tests       | Vitest, Storybook stories as tests in real Chromium                      |
+| Layer       | Choice                                                                  |
+| ----------- | ----------------------------------------------------------------------- |
+| Monorepo    | pnpm workspaces + Turborepo, Node 24, TypeScript 7                      |
+| Web         | TanStack Start (React 19 + Compiler) → Cloudflare Workers               |
+| Styling     | StyleX tokens (the devknobs panel's) + Base UI components + Storybook   |
+| i18n        | Paraglide v2 (en only)                                                  |
+| Analytics   | Self-hosted OpenPanel, page views only, `/api/op` reverse proxy         |
+| Logging     | evlog wide events to an Axiom drain                                     |
+| Lint/format | oxlint (`@nkzw/oxlint-config`, type-aware) + oxfmt — no ESLint/Prettier |
+| Tests       | Vitest, Storybook stories as tests in real Chromium                     |
 
 ## Develop
 

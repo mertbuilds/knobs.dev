@@ -1,74 +1,74 @@
 /*
  * shadcn-style CSS variables consumed by src/lib/tokens.stylex.ts.
- * Black/white system: pure black-on-white, grays only for borders/muted/
- * disabled. Destructive/error is the one chromatic exception: red.
- * Dark mode flips via prefers-color-scheme. Radius: 8px surfaces (cards,
- * dialogs, popovers); pill controls (buttons, inputs) use radius.full.
+ * The devknobs panel's warm neutrals (ground, ink, hairline, card, faint),
+ * the same values as src/tokens.stylex.ts. Destructive/error is the panel's
+ * red. Dark mode flips via prefers-color-scheme, as the panel does. Radius:
+ * 8px surfaces (cards, dialogs, popovers); pill controls use radius.full.
  */
 :root {
-  --background: #ffffff;
-  --foreground: #000000;
-  --card: #ffffff;
-  --card-foreground: #000000;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
-  --primary: #000000;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #000000;
-  --muted: #f5f5f5;
-  --muted-foreground: #8a8a8a;
-  --accent: #f5f5f5;
-  --accent-foreground: #000000;
-  --destructive: #dc2626;
-  --border: #d4d4d4;
-  --input: #d4d4d4;
-  --ring: #8a8a8a;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #000000;
-  --sidebar-primary: #000000;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #d4d4d4;
-  --sidebar-ring: #8a8a8a;
+  --background: #fbfbf9;
+  --foreground: #1b1b19;
+  --card: #fbfbf9;
+  --card-foreground: #1b1b19;
+  --popover: #fbfbf9;
+  --popover-foreground: #1b1b19;
+  --primary: #1b1b19;
+  --primary-foreground: #fbfbf9;
+  --secondary: #f1f1ec;
+  --secondary-foreground: #1b1b19;
+  --muted: #f1f1ec;
+  --muted-foreground: #696963;
+  --accent: #f1f1ec;
+  --accent-foreground: #1b1b19;
+  --destructive: #e5484d;
+  --border: #e6e6e0;
+  --input: #e6e6e0;
+  --ring: #696963;
+  --sidebar: #fbfbf9;
+  --sidebar-foreground: #1b1b19;
+  --sidebar-primary: #1b1b19;
+  --sidebar-primary-foreground: #fbfbf9;
+  --sidebar-accent: #f1f1ec;
+  --sidebar-accent-foreground: #1b1b19;
+  --sidebar-border: #e6e6e0;
+  --sidebar-ring: #696963;
   --radius: 8px;
-  --font-sans: 'Suisse Intl', 'Inter Variable', system-ui, sans-serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #000000;
-    --foreground: #ffffff;
-    --card: #000000;
-    --card-foreground: #ffffff;
-    --popover: #000000;
-    --popover-foreground: #ffffff;
-    --primary: #ffffff;
-    --primary-foreground: #000000;
-    --secondary: #1a1a1a;
-    --secondary-foreground: #ffffff;
-    --muted: #1a1a1a;
-    --muted-foreground: #8a8a8a;
-    --accent: #1a1a1a;
-    --accent-foreground: #ffffff;
-    --destructive: #f87171;
-    --border: #3f3f3f;
-    --input: #3f3f3f;
-    --ring: #8a8a8a;
-    --sidebar: #000000;
-    --sidebar-foreground: #ffffff;
-    --sidebar-primary: #ffffff;
-    --sidebar-primary-foreground: #000000;
-    --sidebar-accent: #1a1a1a;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #3f3f3f;
-    --sidebar-ring: #8a8a8a;
+    --background: #151513;
+    --foreground: #e9e9e3;
+    --card: #151513;
+    --card-foreground: #e9e9e3;
+    --popover: #151513;
+    --popover-foreground: #e9e9e3;
+    --primary: #e9e9e3;
+    --primary-foreground: #151513;
+    --secondary: #1f1f1c;
+    --secondary-foreground: #e9e9e3;
+    --muted: #1f1f1c;
+    --muted-foreground: #8c8c85;
+    --accent: #1f1f1c;
+    --accent-foreground: #e9e9e3;
+    --destructive: #ff6369;
+    --border: #2b2b28;
+    --input: #2b2b28;
+    --ring: #8c8c85;
+    --sidebar: #151513;
+    --sidebar-foreground: #e9e9e3;
+    --sidebar-primary: #e9e9e3;
+    --sidebar-primary-foreground: #151513;
+    --sidebar-accent: #1f1f1c;
+    --sidebar-accent-foreground: #e9e9e3;
+    --sidebar-border: #2b2b28;
+    --sidebar-ring: #8c8c85;
   }
 }
 
-/* Links: foreground with underline in the black/white system — never browser
-   blue/purple, and :visited must not diverge. */
+/* Links: foreground with underline, never browser blue/purple, and :visited
+   must not diverge. */
 a {
   color: inherit;
   text-decoration-line: underline;

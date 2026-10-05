@@ -1,4 +1,4 @@
-import { colors, font, radius, spacing } from '@knobs/ui/tokens.stylex';
+import { colors, font, radius, shadow, spacing } from '@knobs/ui/tokens.stylex';
 import { create, props, type StyleXStyles } from '@stylexjs/stylex';
 import { createFileRoute } from '@tanstack/react-router';
 import { getState, mount, reset, setState, unmount, type DevknobsStatePatch } from 'devknobs';
@@ -64,33 +64,35 @@ const PANEL = '[data-devknobs="panel"]';
 const NOTICES = 'https://github.com/mertbuilds/devknobs/blob/main/THIRD_PARTY_NOTICES.md';
 
 const styles = create({
-  // The feature grid's own row gap, so the line below it reads as a new block.
+  // The feature grid's own gap, so the line below it reads as a new block.
   afterFeatures: {
     marginTop: spacing.s2,
   },
   blocks: {
     display: 'flex',
     flexDirection: 'column',
-    gap: spacing.s6,
+    gap: spacing.s4,
   },
+  // A code box is a panel field: the card ground, 8 round, and the copy
+  // button 4 inside it, so 4 round.
   code: {
     alignItems: 'flex-start',
-    borderColor: colors.border,
-    borderRadius: radius.base,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    columnGap: spacing.s3,
+    backgroundColor: colors.card,
+    borderRadius: radius.row,
+    columnGap: spacing.s1,
     display: 'flex',
-    padding: spacing.s3,
+    padding: spacing.s1,
   },
   codeText: {
     flexGrow: 1,
-    fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace",
-    fontSize: 13,
-    lineHeight: 1.7,
+    fontFamily: font.mono,
+    fontSize: 12.5,
+    lineHeight: '22px',
     margin: 0,
     minWidth: 0,
     overflowX: 'auto',
+    paddingBlock: 0,
+    paddingInline: '8px',
     whiteSpace: 'pre',
   },
   // A long single line, such as a grab line, breaks instead of scrolling.
@@ -98,10 +100,13 @@ const styles = create({
     overflowWrap: 'anywhere',
     whiteSpace: 'pre-wrap',
   },
-  // As tall as one line of code, so the icon sits on the first line.
+  // The panel's small icon button: faint, and the track ground on hover.
   copy: {
     alignItems: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: {
+      ':hover': colors.track,
+      default: 'transparent',
+    },
     borderRadius: radius.base,
     borderStyle: 'none',
     color: {
@@ -113,38 +118,46 @@ const styles = create({
     flexShrink: 0,
     height: 22,
     justifyContent: 'center',
-    outlineColor: colors.fg,
-    outlineOffset: 2,
+    outlineColor: colors.muted,
+    outlineOffset: -1,
     outlineStyle: {
       ':focus-visible': 'solid',
       default: 'none',
     },
-    outlineWidth: 2,
+    outlineWidth: 1,
     padding: 0,
+    transitionDuration: '120ms',
+    transitionProperty: 'background-color, color',
+    transitionTimingFunction: 'ease-out',
     width: 22,
   },
   feature: {
+    backgroundColor: colors.card,
+    borderRadius: radius.row,
     display: 'flex',
     flexDirection: 'column',
     gap: spacing.s1,
+    paddingBlock: '10px 12px',
+    paddingInline: spacing.s3,
   },
   featureDetail: {
     color: colors.muted,
-    fontSize: font.sizeSm,
+    fontSize: 13,
+    lineHeight: 1.5,
     margin: 0,
   },
   featureName: {
+    fontSize: 13,
     fontWeight: font.weightMedium,
   },
   features: {
-    columnGap: spacing.s8,
     display: 'grid',
+    gap: spacing.s2,
     gridTemplateColumns: {
       default: '1fr',
       [WIDE]: '1fr 1fr',
     },
     margin: 0,
-    rowGap: spacing.s6,
   },
   footer: {
     borderTopColor: colors.border,
@@ -153,18 +166,92 @@ const styles = create({
     columnGap: spacing.s6,
     display: 'flex',
     flexWrap: 'wrap',
+    fontSize: 13,
     paddingTop: spacing.s6,
     rowGap: spacing.s2,
   },
+  // grab's own box, drawn still: half its blue for the line, a tint inside.
+  grabBox: {
+    backgroundColor: `color-mix(in srgb, ${colors.accent} 8%, transparent)`,
+    borderColor: `color-mix(in srgb, ${colors.accent} 50%, transparent)`,
+    borderRadius: radius.base,
+    borderStyle: 'solid',
+    borderWidth: 1,
+    fontSize: 19,
+    fontWeight: font.weightMedium,
+    letterSpacing: '-0.01em',
+    lineHeight: 1.4,
+    paddingBlock: 2,
+    paddingInline: spacing.s1,
+  },
+  grabDemo: {
+    alignItems: 'flex-start',
+    backgroundColor: colors.card,
+    borderRadius: radius.row,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+    padding: spacing.s4,
+  },
+  // grab's label bar: its tag in gray, then the component.
+  grabPill: {
+    alignItems: 'center',
+    backgroundColor: colors.grabBar,
+    borderRadius: radius.bar,
+    color: colors.grabBarText,
+    columnGap: 6,
+    display: 'inline-flex',
+    fontSize: 13,
+    lineHeight: '16px',
+    paddingBlock: 6,
+    paddingInline: spacing.s2,
+  },
+  grabTag: {
+    color: colors.grabTag,
+  },
   hint: {
     color: colors.muted,
-    fontSize: font.sizeSm,
+    fontSize: 13,
     margin: 0,
+  },
+  hintItem: {
+    alignItems: 'center',
+    columnGap: spacing.s1,
+    display: 'inline-flex',
+    whiteSpace: 'nowrap',
+  },
+  // The panel's footer row of key hints: a key chip and its word.
+  hints: {
+    alignItems: 'center',
+    color: colors.muted,
+    columnGap: spacing.s3,
+    display: 'flex',
+    flexWrap: 'wrap',
+    fontSize: font.sizeXs,
+    lineHeight: 1.4,
+    margin: 0,
+    padding: 0,
+    rowGap: 6,
   },
   // Hugs the one short line instead of stretching an empty box across the hero.
   installCode: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
+  },
+  // The panel's key chip: a hairline box around the key, nothing else.
+  kbd: {
+    borderColor: colors.border,
+    borderRadius: radius.base,
+    borderStyle: 'solid',
+    borderWidth: 1,
+    boxSizing: 'border-box',
+    display: 'inline-block',
+    fontFamily: 'inherit',
+    fontSize: '0.85em',
+    lineHeight: 1.4,
+    minWidth: '1.6em',
+    paddingInline: 3,
+    textAlign: 'center',
   },
   limits: {
     display: 'flex',
@@ -180,7 +267,7 @@ const styles = create({
     },
     textDecorationLine: 'underline',
     textUnderlineOffset: '3px',
-    transitionDuration: '150ms',
+    transitionDuration: '120ms',
     transitionProperty: 'color',
   },
   // Read by screen readers, never drawn.
@@ -194,7 +281,7 @@ const styles = create({
   },
   note: {
     color: colors.muted,
-    fontSize: font.sizeSm,
+    fontSize: 13,
     margin: 0,
   },
   page: {
@@ -204,13 +291,10 @@ const styles = create({
     flexDirection: 'column',
     fontFamily: font.family,
     fontSize: 15,
-    gap: {
-      default: spacing.s12,
-      [WIDE]: spacing.s16,
-    },
+    gap: spacing.s12,
     lineHeight: 1.6,
     marginInline: 'auto',
-    maxWidth: 720,
+    maxWidth: 680,
     paddingBlock: {
       default: spacing.s12,
       [WIDE]: spacing.s16,
@@ -222,38 +306,57 @@ const styles = create({
     flexDirection: 'column',
     gap: spacing.s4,
   },
+  // Small and calm, like the panel's own labels.
   sectionHeading: {
-    fontSize: 17,
-    fontWeight: font.weightMedium,
-    letterSpacing: '-0.01em',
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: font.weightRegular,
     margin: 0,
   },
+  // A small panel: hairline, 13 round, rows 4 inside it, so 8 round.
   seen: {
+    backgroundColor: colors.bg,
     borderColor: colors.border,
-    borderRadius: radius.base,
+    borderRadius: radius.panel,
     borderStyle: 'solid',
     borderWidth: 1,
-    columnGap: spacing.s4,
     display: 'grid',
-    fontSize: font.sizeSm,
-    gridTemplateColumns: 'max-content 1fr',
+    fontSize: 13,
+    gap: 1,
     margin: 0,
-    padding: spacing.s3,
-    rowGap: spacing.s1,
+    maxWidth: 400,
+    padding: spacing.s1,
   },
   seenLabel: {
     color: colors.muted,
+    flexShrink: 0,
+  },
+  seenRow: {
+    alignItems: 'baseline',
+    backgroundColor: {
+      ':hover': colors.card,
+      default: 'transparent',
+    },
+    borderRadius: radius.row,
+    columnGap: spacing.s2,
+    display: 'flex',
+    paddingBlock: spacing.s1,
+    paddingInline: '10px 8px',
+    transitionDuration: '120ms',
+    transitionProperty: 'background-color',
   },
   seenTitle: {
     color: colors.muted,
-    fontSize: font.sizeSm,
+    fontSize: 13,
     margin: 0,
   },
   seenValue: {
+    flexGrow: 1,
     fontVariantNumeric: 'tabular-nums',
     margin: 0,
     minWidth: 0,
     overflowWrap: 'anywhere',
+    textAlign: 'end',
   },
   self: {
     alignSelf: 'flex-start',
@@ -261,41 +364,49 @@ const styles = create({
   snippet: {
     display: 'flex',
     flexDirection: 'column',
-    gap: spacing.s2,
+    gap: 6,
   },
   snippetLabel: {
     color: colors.muted,
-    fontSize: font.sizeSm,
+    fontSize: 13,
   },
   text: {
     margin: 0,
   },
+  // The panel's preset chip: the track ground, raised with its lift on hover.
   tryButton: {
     backgroundColor: {
-      ':hover': colors.fg,
-      default: colors.bg,
+      ':hover': colors.raised,
+      default: colors.track,
     },
-    borderColor: colors.fg,
     borderRadius: radius.base,
-    borderStyle: 'solid',
-    borderWidth: 1,
-    color: {
-      ':hover': colors.bg,
-      default: colors.fg,
+    borderStyle: 'none',
+    boxShadow: {
+      ':hover': shadow.lift,
+      default: 'none',
     },
+    color: colors.fg,
     cursor: 'pointer',
     fontFamily: 'inherit',
-    fontSize: font.sizeSm,
-    lineHeight: 1.4,
-    paddingBlock: spacing.s2,
-    paddingInline: spacing.s3,
-    transitionDuration: '150ms',
-    transitionProperty: 'background-color, color',
+    fontSize: 13,
+    height: 28,
+    outlineColor: colors.muted,
+    outlineOffset: 2,
+    outlineStyle: {
+      ':focus-visible': 'solid',
+      default: 'none',
+    },
+    outlineWidth: 1,
+    paddingBlock: 0,
+    paddingInline: '8px 10px',
+    transitionDuration: '120ms',
+    transitionProperty: 'background-color, box-shadow',
+    transitionTimingFunction: 'ease-out',
   },
   tryButtons: {
     display: 'flex',
     flexWrap: 'wrap',
-    gap: spacing.s2,
+    gap: 6,
   },
   // An icon beside its label, centered on the line, a fixed gap apart.
   withIcon: {
@@ -402,10 +513,60 @@ function readSeen(): Seen {
 
 function SeenRow({ label, value }: { label: string; value: string | undefined }) {
   return (
-    <>
+    <div {...props(styles.seenRow)}>
       <dt {...props(styles.seenLabel)}>{label}</dt>
       <dd {...props(styles.seenValue)}>{value}</dd>
-    </>
+    </div>
+  );
+}
+
+/**
+ * Text with keys in it, each written `[[key]]` in the message, drawn as the
+ * panel's key chips.
+ */
+function withKeys(text: string) {
+  return text.split(/\[\[(.+?)\]\]/).map((part, index) =>
+    index % 2 === 1 ? (
+      <kbd {...props(styles.kbd)} key={index}>
+        {part}
+      </kbd>
+    ) : (
+      part
+    ),
+  );
+}
+
+/** The five shortcuts the panel's footer lists, in its order, drawn the same way. */
+function Hints() {
+  const hints = [
+    [m.hint_panel_key(), m.hint_panel()],
+    [m.hint_search_key(), m.hint_search()],
+    [m.hint_grab_key(), m.hint_grab()],
+    [m.hint_replay_key(), m.hint_replay()],
+    [m.hint_reset_key(), m.hint_reset()],
+  ];
+  return (
+    <ul {...props(styles.hints)}>
+      {hints.map(([key, word]) => (
+        <li {...props(styles.hintItem)} key={word}>
+          <kbd {...props(styles.kbd)}>{key}</kbd>
+          {word}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** grab's box and label bar on the headline, drawn still, as a visitor sees them live. */
+function GrabDemo() {
+  return (
+    <div {...props(styles.grabDemo)} aria-hidden="true">
+      <span {...props(styles.grabBox)}>{m.app_name()}</span>
+      <span {...props(styles.grabPill)}>
+        <span {...props(styles.grabTag)}>{m.grab_demo_tag()}</span>
+        {m.grab_demo_component()}
+      </span>
+    </div>
   );
 }
 
@@ -589,7 +750,7 @@ function Landing() {
           name="install"
           style={styles.installCode}
         />
-        <p {...props(styles.hint)}>{m.hero_hint()}</p>
+        <p {...props(styles.hint)}>{withKeys(m.hero_hint())}</p>
       </header>
 
       <section {...props(styles.section)}>
@@ -619,8 +780,9 @@ function Landing() {
           <CrosshairIcon {...ICON} />
           {m.grab_title()}
         </h2>
-        <p {...props(styles.text)}>{m.grab_intro()}</p>
-        <p {...props(styles.text)}>{m.grab_try()}</p>
+        <p {...props(styles.text)}>{withKeys(m.grab_intro())}</p>
+        <p {...props(styles.text)}>{withKeys(m.grab_try())}</p>
+        <GrabDemo />
         <Snippet
           code={m.grab_example_code()}
           copyLabel={m.copy_grab_example()}
@@ -630,10 +792,10 @@ function Landing() {
         />
         <p {...props(styles.text)}>{m.grab_context()}</p>
         <ul {...props(styles.limits)}>
-          <li>{m.grab_key_copy()}</li>
-          <li>{m.grab_key_arrows()}</li>
-          <li>{m.grab_key_shift()}</li>
-          <li>{m.grab_key_escape()}</li>
+          <li>{withKeys(m.grab_key_copy())}</li>
+          <li>{withKeys(m.grab_key_arrows())}</li>
+          <li>{withKeys(m.grab_key_shift())}</li>
+          <li>{withKeys(m.grab_key_escape())}</li>
         </ul>
         <p {...props(styles.text)}>{m.grab_lines()}</p>
         <p {...props(styles.text)}>{m.grab_frame()}</p>
@@ -684,6 +846,7 @@ function Landing() {
           <Feature detail={m.feature_debug_detail()} icon={BugIcon} name={m.feature_debug()} />
         </dl>
         <p {...props(styles.text, styles.afterFeatures)}>{m.features_panel()}</p>
+        <Hints />
         <a
           href="https://github.com/mertbuilds/devknobs#knobs"
           {...props(styles.link, styles.self, styles.withIcon)}
