@@ -1,7 +1,7 @@
 import { colors, font, radius, shadow, spacing } from '@knobs/ui/tokens.stylex';
 import { create, props, type StyleXStyles } from '@stylexjs/stylex';
 import { createFileRoute } from '@tanstack/react-router';
-import { getState, mount, reset, setState, unmount, type DevknobsStatePatch } from 'devknobs';
+import type { DevknobsStatePatch } from 'devknobs';
 import {
   ArrowUpRightIcon,
   BugIcon,
@@ -29,6 +29,60 @@ export const Route = createFileRoute('/')({
 // that size, so these columns collapse the way they do on a real phone.
 const WIDE = '@media (min-width: 640px)';
 
+type Knobs = typeof import('devknobs');
+
+let loading: Promise<Knobs> | undefined;
+let mounted = false;
+
+/**
+ * devknobs is most of the page's JavaScript, so it loads after hydration
+ * instead of in the entry chunk. One load for the whole page: whoever asks
+ * first, the idle mount or a "try it" button pressed before it, starts it,
+ * and the panel mounts once. Each call queues on the same promise, so mounts
+ * and unmounts run in the order they were asked for.
+ */
+function mountKnobs(): Promise<Knobs> {
+  loading ??= import('devknobs');
+  return loading.then((module) => {
+    if (!mounted) {
+      module.mount();
+      mounted = true;
+    }
+    return module;
+  });
+}
+
+function unmountKnobs(): void {
+  void loading?.then((module) => {
+    if (mounted) {
+      module.unmount();
+      mounted = false;
+    }
+  });
+}
+
+/** True once a visitor has turned a knob in this tab, so the stored state should apply at once. */
+function hasStoredKnobs(): boolean {
+  try {
+    return sessionStorage.getItem('devknobs') !== null;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Runs `task` when the browser is idle, at most a second after it is asked.
+ * Safari has no `requestIdleCallback`, so a short timer stands in.
+ */
+function whenIdle(task: () => void): () => void {
+  if ('requestIdleCallback' in window) {
+    const id = requestIdleCallback(task, { timeout: 1000 });
+    return () => cancelIdleCallback(id);
+  }
+  const id = setTimeout(task, 200);
+  return () => clearTimeout(id);
+}
+
 // Each "try it" button and the knobs it turns, built at click time so the
 // clock counts from the moment of the click.
 const DEMOS = {
@@ -36,7 +90,7 @@ const DEMOS = {
   iphone: () => ({ device: 'iphone-17-pro' }),
   pixel: () => ({ device: 'pixel-10' }),
   // The opposite of the scheme in use, so it shows on either system setting.
-  scheme: () => {
+  scheme: ({ getState }: Knobs) => {
     const { scheme } = getState();
     const dark =
       scheme === 'system' ? matchMedia('(prefers-color-scheme: dark)').matches : scheme === 'dark';
@@ -49,7 +103,7 @@ const DEMOS = {
     const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9).getTime();
     return { clock: { at, mode: 'offset', speed: 1 } };
   },
-} satisfies Record<string, () => DevknobsStatePatch>;
+} satisfies Record<string, (knobs: Knobs) => DevknobsStatePatch>;
 
 type Demo = keyof typeof DEMOS | 'reset';
 
@@ -452,11 +506,13 @@ function Feature({ detail, icon: Icon, name }: { detail: string; icon: LucideIco
  */
 function runDemo(demo: Demo) {
   track('try_click', { demo });
-  if (demo === 'reset') {
-    reset();
-    return;
-  }
-  setState({ ...DEMOS[demo](), panel: { open: true } });
+  void mountKnobs().then((module) => {
+    if (demo === 'reset') {
+      module.reset();
+      return;
+    }
+    module.setState({ ...DEMOS[demo](module), panel: { open: true } });
+  });
 }
 
 /**
@@ -736,18 +792,26 @@ function Landing() {
   // dev the way an app embedding devknobs would gate it. Client-only: `mount`
   // touches `document`, and SSR must never reach it. It starts collapsed to the
   // edge tab the hero points at, and stays open across the reloads the device
-  // and locale knobs cause once a visitor opens it.
+  // and locale knobs cause once a visitor opens it. A first visit loads it when
+  // the browser is idle; a reload with knobs already set loads it at once, so
+  // the stored scheme or language does not wait.
   useEffect(() => {
-    mount();
+    let cancel: (() => void) | undefined;
+    if (hasStoredKnobs()) {
+      void mountKnobs();
+    } else {
+      cancel = whenIdle(() => void mountKnobs());
+    }
     // The copy of this page inside a device's frame hands its buttons up here.
     window.knobsDemo = runDemo;
     // One delegated listener for the whole page, panel included. Passive: it
     // never cancels the click it is reading.
     document.addEventListener('click', trackClick, { passive: true });
     return () => {
+      cancel?.();
       document.removeEventListener('click', trackClick);
       delete window.knobsDemo;
-      unmount();
+      unmountKnobs();
     };
   }, []);
 
