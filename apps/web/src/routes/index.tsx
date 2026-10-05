@@ -42,8 +42,10 @@ const DEMOS = {
       scheme === 'system' ? matchMedia('(prefers-color-scheme: dark)').matches : scheme === 'dark';
     return { scheme: dark ? 'light' : 'dark' };
   },
+  // Real time, not `new Date()`: once a click has set the clock, the page's
+  // `Date` reads the emulated time, and a second click would add another day.
   tomorrow: () => {
-    const now = new Date();
+    const now = new Date(performance.timeOrigin + performance.now());
     const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9).getTime();
     return { clock: { at, mode: 'offset', speed: 1 } };
   },
@@ -265,6 +267,13 @@ const styles = create({
       ':hover': colors.fg,
       default: colors.muted,
     },
+    outlineColor: colors.muted,
+    outlineOffset: 2,
+    outlineStyle: {
+      ':focus-visible': 'solid',
+      default: 'none',
+    },
+    outlineWidth: 1,
     textDecorationLine: 'underline',
     textUnderlineOffset: '3px',
     transitionDuration: '120ms',
@@ -624,14 +633,17 @@ function CodeBox({
   }, [copied]);
   const copy = () => {
     track('copy_click', { snippet: name });
-    navigator.clipboard.writeText(code).then(
-      () => setCopied(true),
-      () => {
-        if (text.current !== null) {
-          getSelection()?.selectAllChildren(text.current);
-        }
-      },
-    );
+    // Inside a promise, so a missing `navigator.clipboard` rejects too.
+    Promise.resolve()
+      .then(() => navigator.clipboard.writeText(code))
+      .then(
+        () => setCopied(true),
+        () => {
+          if (text.current !== null) {
+            getSelection()?.selectAllChildren(text.current);
+          }
+        },
+      );
   };
   return (
     <div {...props(styles.code, style)}>
