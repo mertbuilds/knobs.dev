@@ -45,13 +45,11 @@ export const shadow = defineVars({
 
 /**
  * The panel's concentric radii: 13 for a panel, 8 for what sits 4 inside it
- * (rows, fields), 4 for controls, 2 for what sits 2 inside a control. `bar`
- * is grab's label bar.
+ * (rows, fields), 4 for controls. `bar` is grab's label bar.
  */
 export const radius = defineVars({
   bar: '6px',
   base: '4px',
-  inner: '2px',
   panel: '13px',
   row: '8px',
 });
