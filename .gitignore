@@ -14,7 +14,7 @@ apps/web/.tanstack/
 coverage/
 *.tsbuildinfo
 
-# env — only the example is committed
+# env: only the example is committed
 .env*
 !.env.example
 
