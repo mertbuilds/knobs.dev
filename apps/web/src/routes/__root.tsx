@@ -17,7 +17,7 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
  * no link or attribute tracking, and nothing at all from an automated browser
  * or from the copy of the page devknobs loads in a device's frame, which would
  * count every device pick as a second page view.
- * Without a client id the script is never injected — analytics is simply off.
+ * Without a client id the script is never injected, so analytics is simply off.
  */
 function analyticsScript(clientId: string): string {
   return (
@@ -34,7 +34,7 @@ export const Route = createRootRoute({
       // The mark carries its own dark variant, so one file covers both schemes.
       { href: '/favicon.svg', rel: 'icon', type: 'image/svg+xml' },
       // Dev-only: link the unplugin's compiled CSS so SSR HTML is styled on first
-      // paint (the virtual:stylex:runtime import only injects after hydration —
+      // paint (the virtual:stylex:runtime import only injects after hydration;
       // without this link every refresh flashes unstyled). Production CSS is
       // emitted into app.css at build, so the link is dev-only.
       // `precedence` is required: React 19 hoists SSR stylesheets with

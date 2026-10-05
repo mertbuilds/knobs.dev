@@ -3,7 +3,7 @@
 The marketing site for the `devknobs` npm package. <https://knobs.dev>
 
 A copy of [mertbuilds/web-starter](https://github.com/mertbuilds/web-starter) stripped to the
-layers a landing page needs: no api, no database, no auth, no billing. Keep it that way —
+layers a landing page needs: no api, no database, no auth, no billing. Keep it that way:
 nothing gets added until the site needs it.
 
 ## Architecture
@@ -37,7 +37,7 @@ Web app (`apps/web`): `pnpm --filter @knobs/web dev` (:3000 standalone, or portl
 
 ## Local URLs (portless)
 
-`pnpm dev` serves both apps behind [portless](https://portless.sh) — stable named HTTPS URLs instead of ports:
+`pnpm dev` serves both apps behind [portless](https://portless.sh): stable named HTTPS URLs instead of ports:
 
 | Service   | URL                               | Without portless |
 | --------- | --------------------------------- | ---------------- |
@@ -49,8 +49,8 @@ Web app (`apps/web`): `pnpm --filter @knobs/web dev` (:3000 standalone, or portl
 
 ## UI (`packages/ui`)
 
-- Components come from the [shadcn-cssinjs](https://www.shadcn-cssinjs.com) registry (StyleX on Base UI, copy-paste-own) into `src/ui/`, then adapted to this repo. The shadcn CLI currently fails on this registry's cross-registry deps — fetch item JSON from `https://www.shadcn-cssinjs.com/r/<name>.json` and write the files (see the `shadcn-cssinjs` skill for the exact adaptation checklist: relative imports, named stylex imports, `| undefined` on optional props for exactOptionalPropertyTypes).
-- Two token layers, both ours: `src/lib/tokens.stylex.ts` (component tokens — shadcn CSS variables from `src/theme.css`, dark via `prefers-color-scheme`) and `src/tokens.stylex.ts` (app-level: `colors`, `shadow`, `radius`, `spacing`, `font`, raw `palette`). Components use the lib tokens; app layout uses the app tokens. Never raw color values.
+- Components come from the [shadcn-cssinjs](https://www.shadcn-cssinjs.com) registry (StyleX on Base UI, copy-paste-own) into `src/ui/`, then adapted to this repo. The shadcn CLI currently fails on this registry's cross-registry deps; fetch item JSON from `https://www.shadcn-cssinjs.com/r/<name>.json` and write the files (see the `shadcn-cssinjs` skill for the exact adaptation checklist: relative imports, named stylex imports, `| undefined` on optional props for exactOptionalPropertyTypes).
+- Two token layers, both ours: `src/lib/tokens.stylex.ts` (component tokens: shadcn CSS variables from `src/theme.css`, dark via `prefers-color-scheme`) and `src/tokens.stylex.ts` (app-level: `colors`, `shadow`, `radius`, `spacing`, `font`, raw `palette`). Components use the lib tokens; app layout uses the app tokens. Never raw color values.
 - The site wears the devknobs panel's tokens, so page and panel look like one thing. Source of truth: the panel's stylesheet (`src/ui/styles.ts` in mertbuilds/devknobs). Its warm neutrals (ground, ink, hairline, card, track, raised, faint as `muted`, a step darker in light for 4.5:1 on a card) follow the visitor's scheme as the panel does; grab's blue is `colors.accent`. Radii are the panel's concentric scale: 13 panel, 8 rows and fields, 4 controls, 2 inside a control, 6 grab's label bar. Font is the panel's system stack (`font.family`), with `font.mono` for code and readouts. `pnpm fonts` still fetches Suisse Intl into `fonts.css`, which the page no longer uses. Components inherit the font from the app body; they set none themselves.
 - Icons: `lucide-react` (named `*Icon` imports, so it tree-shakes) at 16px, stroke 1.5, `currentColor`, `aria-hidden`, 8px from their label, only where they help scanning (group titles, buttons, outbound links). Brand marks (GitHub, npm) are inline Simple Icons paths (CC0) in `apps/web/src/lib/brand-marks.tsx`, not a package.
 - Current set: Button, Input, Field (label/error composition), Dialog, Select, Table, Label, Separator, Skeleton, Toaster (sonner, next-themes dropped). Grow on demand from the registry.
@@ -60,17 +60,17 @@ Web app (`apps/web`): `pnpm --filter @knobs/web dev` (:3000 standalone, or portl
 
 - TanStack Start on Cloudflare Workers. Custom entry `src/server.ts` (wrangler `main`) wraps the Start handler with `canonicalRedirect`, `paraglideMiddleware` and an evlog wide event per request (Axiom drain when `AXIOM_TOKEN`+`AXIOM_DATASET` set); wrangler `observability` stays disabled so logs are not duplicated.
 - React Compiler is on (`react({ compiler: true })` via `oxc-transform-react`).
-- i18n: Paraglide v2, `messages/en.json` only. Generated `src/paraglide/` and `src/routeTree.gen.ts` are gitignored build output — never edit them, they regenerate on `vite dev`/`build`. All user-facing strings go through `m.*()`.
-- Env: `apps/web/.env` (copy `apps/web/.env.example`). Vite reads it, and the Cloudflare vite plugin also hands it to the Worker as local dev vars. `VITE_*` vars are validated in `packages/env` — all of them optional, so the site runs with no env at all.
-- StyleX in routes: import `../app.css` (build injection target) — there is no importable `virtual:stylex.css` module; in dev the plugin middleware serves the CSS itself.
+- i18n: Paraglide v2, `messages/en.json` only. Generated `src/paraglide/` and `src/routeTree.gen.ts` are gitignored build output: never edit them, they regenerate on `vite dev`/`build`. All user-facing strings go through `m.*()`.
+- Env: `apps/web/.env` (copy `apps/web/.env.example`). Vite reads it, and the Cloudflare vite plugin also hands it to the Worker as local dev vars. `VITE_*` vars are validated in `packages/env`, all of them optional, so the site runs with no env at all.
+- StyleX in routes: import `../app.css` (build injection target); there is no importable `virtual:stylex.css` module; in dev the plugin middleware serves the CSS itself.
 - No tests live here: `packages/ui` stories cover the components, and the routes are a static page. Add a vitest project back if that changes.
 
 ### Analytics
 
-- Self-hosted OpenPanel at `analytics.vinena.studio`. Page views plus three click events: `trackOutgoingLinks` and `trackAttributes` stay off, and one delegated `click` listener on `document` (`src/routes/index.tsx`, through `track` in `src/lib/analytics.ts`) sends `link_click` for the page's anchors and `knob_click` for the devknobs panel's buttons and search results, read off `composedPath()` because the panel's shadow root is open. The "try it" buttons send `try_click` from their own handler. The inline loader in `__root.tsx` skips automated browsers (`navigator.webdriver`) and the copy of the page devknobs loads in a device's frame (`window.top !== window`), so a device pick is not a second page view; a "try it" button pressed inside the frame hands its click (and its `try_click`) up to the page above through `window.knobsDemo`.
+- Self-hosted OpenPanel at `analytics.vinena.studio`. Page views plus four click events: `trackOutgoingLinks` and `trackAttributes` stay off, and one delegated `click` listener on `document` (`src/routes/index.tsx`, through `track` in `src/lib/analytics.ts`) sends `link_click` for the page's anchors and `knob_click` for the devknobs panel's buttons and search results, read off `composedPath()` because the panel's shadow root is open. The "try it" buttons send `try_click` from their own handler, and the code boxes' copy buttons send `copy_click` from theirs. The inline loader in `__root.tsx` skips automated browsers (`navigator.webdriver`) and the copy of the page devknobs loads in a device's frame (`window.top !== window`), so a device pick is not a second page view; a "try it" button pressed inside the frame hands its click (and its `try_click`) up to the page above through `window.knobsDemo`.
 - The client id comes from `VITE_OPENPANEL_CLIENT_ID`. Unset means the script is never injected. The id is public; the secret half never leaves the analytics host. CI reads the repo variable `OPENPANEL_CLIENT_ID` for production builds, and leaves it unset on PR previews.
-- The OpenPanel project allows `knobs.dev` only, so local events answer `401 Ingestion: Invalid cors or secret` — dev traffic cannot reach the numbers even with the id in `apps/web/.env`. A 401 from `https://knobs.localhost` means the proxy works, not that it is broken.
-- `src/routes/api.op.$.ts` reverse-proxies the vendor so a blocker that knows its host does not drop the page views: `/api/op/op1.js` serves the script, everything else goes to `<host>/api/*`. It forwards `cf-connecting-ip` as `openpanel-client-ip` **and** `x-client-ip` — without those OpenPanel counts every visit as the same device. It answers crawler POSTs with a bare 200 instead of forwarding them.
+- The OpenPanel project allows `knobs.dev` only, so local events answer `401 Ingestion: Invalid cors or secret`; dev traffic cannot reach the numbers even with the id in `apps/web/.env`. A 401 from `https://knobs.localhost` means the proxy works, not that it is broken.
+- `src/routes/api.op.$.ts` reverse-proxies the vendor so a blocker that knows its host does not drop the page views: `/api/op/op1.js` serves the script, everything else goes to `<host>/api/*`. It forwards `cf-connecting-ip` as `openpanel-client-ip` **and** `x-client-ip`; without those OpenPanel counts every visit as the same device. It answers crawler POSTs with a bare 200 instead of forwarding them.
 
 ### Deploy
 
@@ -86,7 +86,7 @@ Web app (`apps/web`): `pnpm --filter @knobs/web dev` (:3000 standalone, or portl
 - `pnpm dev` runs mprocs with two panes: web and storybook. Quit with `q`; panes restart individually with `r`.
 - When everything is broken for no reason: `pnpm bad-day` (kills dev processes, removes every node_modules/cache/generated dir, prunes the pnpm store, reinstalls). Preview with `DRY_RUN=1 pnpm bad-day`.
 - Claude Code hooks (`.claude/settings.json`): every Write/Edit is auto-formatted (oxfmt) and auto-fixed (oxlint) on save; a Stop hook runs `pnpm typecheck` and blocks the stop if types are broken.
-- Agent skills for the stack live in `.claude/skills/` (committed, pinned by `skills-lock.json`). Maintenance: `npx skills update` refreshes them; `pnpm skills:check` warns when a dep's installed major drifts from what its skill was last verified against (`skills.versions.json`) — after a major dep bump, update the skill, re-verify, bump `checkedMajor`. MCP servers are pinned by exact version in `.mcp.json`.
+- Agent skills for the stack live in `.claude/skills/` (committed, pinned by `skills-lock.json`). Maintenance: `npx skills update` refreshes them; `pnpm skills:check` warns when a dep's installed major drifts from what its skill was last verified against (`skills.versions.json`); after a major dep bump, update the skill, re-verify, bump `checkedMajor`. MCP servers are pinned by exact version in `.mcp.json`.
 - Renovate bumps deps (minor/patch grouped weekly, majors gated behind the dependency dashboard).
 
 ## CI/CD
