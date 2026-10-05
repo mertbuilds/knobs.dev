@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { cloudflare } from '@cloudflare/vite-plugin';
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
@@ -6,6 +6,7 @@ import { unplugin as stylex } from '@stylexjs/unplugin';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin, searchForWorkspaceRoot } from 'vite';
+import web from './package.json' with { type: 'json' };
 
 const repoRoot = resolve(import.meta.dirname, '../..');
 
@@ -17,7 +18,7 @@ function localDevknobs(): Plugin {
   const wanted = resolve(repoRoot, process.env.DEVKNOBS_PATH ?? '../devknobs');
   const root = existsSync(resolve(wanted, 'src/index.ts')) ? realpathSync(wanted) : null;
   return {
-    apply: 'serve',
+    apply: (_config, { command, isPreview }) => command === 'serve' && !isPreview,
     config() {
       if (!root) {
         return;
@@ -32,10 +33,7 @@ function localDevknobs(): Plugin {
         logger.info(`devknobs: local ${root}`);
         return;
       }
-      const { version } = JSON.parse(
-        readFileSync(resolve(import.meta.dirname, 'node_modules/devknobs/package.json'), 'utf8'),
-      ) as { version: string };
-      logger.info(`devknobs: npm ${version} (no local checkout at ${wanted})`);
+      logger.info(`devknobs: npm ${web.devDependencies.devknobs} (no local checkout at ${wanted})`);
     },
     configureServer(server) {
       if (!root) {
