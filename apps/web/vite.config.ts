@@ -92,7 +92,7 @@ export default defineConfig({
     // debug:false — StyleX's dev `data-style-src` attribute embeds file:line, and the
     // React Compiler (client-only) shifts line numbers vs the SSR transform, causing a
     // hydration attribute mismatch that detaches React's event tree (dead forms).
-    stylex.vite({ debug: false, useCSSLayers: true }),
+    stylex.vite({ debug: false, enableFontSizePxToRem: true, useCSSLayers: true }),
     paraglideVitePlugin({
       cookieName: 'PARAGLIDE_LOCALE',
       outdir: './src/paraglide',
