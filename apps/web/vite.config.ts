@@ -5,7 +5,7 @@ import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import { unplugin as stylex } from '@stylexjs/unplugin';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import react from '@vitejs/plugin-react';
-import { defineConfig, type Plugin, searchForWorkspaceRoot } from 'vite';
+import { build, defineConfig, type Plugin, searchForWorkspaceRoot } from 'vite';
 import web from './package.json' with { type: 'json' };
 
 const repoRoot = resolve(import.meta.dirname, '../..');
@@ -13,7 +13,8 @@ const repoRoot = resolve(import.meta.dirname, '../..');
 // The dev server runs devknobs from its local checkout, so the site tests the
 // version in the works: DEVKNOBS_PATH (absolute, or relative to the repo root),
 // else `devknobs` beside this checkout, which also holds for `knobs.dev.<branch>`
-// worktrees. Builds keep the pinned npm package.
+// worktrees. Builds keep the pinned npm package. The early script
+// (`devknobs/early?raw`) is built from the checkout's current source too.
 function localDevknobs(): Plugin {
   const wanted = resolve(repoRoot, process.env.DEVKNOBS_PATH ?? '../devknobs');
   const root = existsSync(resolve(wanted, 'src/index.ts')) ? realpathSync(wanted) : null;
@@ -48,6 +49,35 @@ function localDevknobs(): Plugin {
         }
         next();
       });
+    },
+    // Before Vite's own `?raw` loader, which would read the npm package's dist.
+    enforce: 'pre',
+    async load(id) {
+      if (!root || !/\/devknobs\/dist\/early\.global\.js\?raw$/.test(id)) {
+        return;
+      }
+      const result = await build({
+        build: {
+          copyPublicDir: false,
+          lib: { entry: 'src/early.ts', formats: ['iife'], name: 'devknobsEarly' },
+          write: false,
+        },
+        configFile: false,
+        envFile: false,
+        logLevel: 'silent',
+        root,
+      });
+      // One output, as an array or alone depending on how Vite was started.
+      const [built] = [result].flat();
+      const [chunk] = built && 'output' in built ? built.output : [];
+      if (chunk?.type !== 'chunk') {
+        throw new Error(`devknobs: could not build ${root}/src/early.ts`);
+      }
+      // An edit to any of its sources rebuilds it on the next request.
+      for (const file of chunk.moduleIds) {
+        this.addWatchFile(file);
+      }
+      return `export default ${JSON.stringify(chunk.code)};`;
     },
     name: 'local-devknobs',
   };
