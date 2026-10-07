@@ -9,7 +9,9 @@ import {
   ClockIcon,
   CopyIcon,
   CrosshairIcon,
+  FoldHorizontalIcon,
   LanguagesIcon,
+  PaletteIcon,
   PointerIcon,
   RotateCcwIcon,
   SmartphoneIcon,
@@ -83,11 +85,41 @@ function whenIdle(task: () => void): () => void {
   return () => clearTimeout(id);
 }
 
+// The mat colors in the order the button steps through them, blue first as
+// devknobs starts.
+const MATS = ['blue', 'green', 'magenta', 'purple', 'red', 'graphite'] as const;
+
+// devknobs 0.1.0 knobs. The pinned package's types predate them, so they are
+// spelled out here until it is bumped; the same fields there make this a no-op.
+type NewKnobs = { mat?: (typeof MATS)[number]; posture?: 'closed' | 'open' };
+type Patch = DevknobsStatePatch & NewKnobs;
+
+function readNew({ getState }: Knobs): NewKnobs {
+  return getState() as NewKnobs;
+}
+
+const DUO = 'iphone-duo';
+
 // Each "try it" button and the knobs it turns, built at click time so the
 // clock counts from the moment of the click.
 const DEMOS = {
   arabic: () => ({ locale: { dir: 'system', lang: 'ar' } }),
-  iphone: () => ({ device: 'iphone-17-pro' }),
+  duo: () => ({ device: DUO, posture: 'closed' }),
+  // Folds the Duo the other way, or picks it open from any other device.
+  fold: (knobs: Knobs) => {
+    const open = knobs.getState().device === DUO && readNew(knobs).posture === 'open';
+    return { device: DUO, posture: open ? 'closed' : 'open' };
+  },
+  iphone: () => ({ device: 'iphone-18-pro' }),
+  // The next mat color. The mat lies under a frame, so with none up an iPhone
+  // brings one, and the next press shows the splash.
+  mat: (knobs: Knobs) => {
+    const { device, width } = knobs.getState();
+    const next = MATS[(MATS.indexOf(readNew(knobs).mat ?? 'blue') + 1) % MATS.length];
+    return device === 'none' && width === 'full'
+      ? { device: 'iphone-18-pro', mat: next }
+      : { mat: next };
+  },
   pixel: () => ({ device: 'pixel-10' }),
   // The opposite of the scheme in use, so it shows on either system setting.
   scheme: ({ getState }: Knobs) => {
@@ -103,7 +135,7 @@ const DEMOS = {
     const at = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 9).getTime();
     return { clock: { at, mode: 'offset', speed: 1 } };
   },
-} satisfies Record<string, (knobs: Knobs) => DevknobsStatePatch>;
+} satisfies Record<string, (knobs: Knobs) => Patch>;
 
 type Demo = keyof typeof DEMOS | 'reset';
 
@@ -116,6 +148,8 @@ declare global {
 // The devknobs host element. Its shadow root is open, so a click inside the
 // panel still reaches `document` with the real button in its composed path.
 const PANEL = '[data-devknobs="panel"]';
+
+const DUO_CREDIT = 'https://github.com/jadon7/iphone-duo';
 
 const NOTICES = 'https://github.com/mertbuilds/devknobs/blob/main/THIRD_PARTY_NOTICES.md';
 
@@ -469,6 +503,12 @@ const styles = create({
   tryButtons: {
     display: 'flex',
     flexWrap: 'wrap',
+    gap: 6,
+  },
+  // Devices on one line, the other knobs on the next.
+  tryGroups: {
+    display: 'flex',
+    flexDirection: 'column',
     gap: 6,
   },
   // An icon beside its label, centered on the line, a fixed gap apart.
@@ -839,16 +879,41 @@ function Landing() {
       <section {...props(styles.section)}>
         <h2 {...props(styles.sectionHeading)}>{m.try_title()}</h2>
         <p {...props(styles.text)}>{m.try_intro()}</p>
-        <div {...props(styles.tryButtons)}>
-          <TryButton demo="iphone" icon={SmartphoneIcon} label={m.try_iphone()} />
-          <TryButton demo="pixel" icon={SmartphoneIcon} label={m.try_pixel()} />
-          <TryButton demo="tomorrow" icon={ClockIcon} label={m.try_tomorrow()} />
-          <TryButton demo="scheme" icon={SunMoonIcon} label={m.try_scheme()} />
-          <TryButton demo="arabic" icon={LanguagesIcon} label={m.try_arabic()} />
-          <TryButton demo="reset" icon={RotateCcwIcon} label={m.try_reset()} />
+        <div {...props(styles.tryGroups)}>
+          <div {...props(styles.tryButtons)}>
+            <TryButton demo="iphone" icon={SmartphoneIcon} label={m.try_iphone()} />
+            <TryButton demo="pixel" icon={SmartphoneIcon} label={m.try_pixel()} />
+            <TryButton demo="duo" icon={SmartphoneIcon} label={m.try_duo()} />
+            <TryButton demo="fold" icon={FoldHorizontalIcon} label={m.try_fold()} />
+          </div>
+          <div {...props(styles.tryButtons)}>
+            <TryButton demo="tomorrow" icon={ClockIcon} label={m.try_tomorrow()} />
+            <TryButton demo="scheme" icon={SunMoonIcon} label={m.try_scheme()} />
+            <TryButton demo="arabic" icon={LanguagesIcon} label={m.try_arabic()} />
+            <TryButton demo="mat" icon={PaletteIcon} label={m.try_mat()} />
+            <TryButton demo="reset" icon={RotateCcwIcon} label={m.try_reset()} />
+          </div>
         </div>
         <p {...props(styles.seenTitle)}>{m.seen_title()}</p>
         <SeenList />
+      </section>
+
+      <section {...props(styles.section)}>
+        <h2 {...props(styles.sectionHeading)}>{m.new_title()}</h2>
+        <ul {...props(styles.limits)}>
+          <li>
+            {m.new_duo()}{' '}
+            <a href={DUO_CREDIT} {...props(styles.link)}>
+              {m.new_duo_link()}
+            </a>
+            {m.new_duo_end()}
+          </li>
+          <li>{m.new_mat()}</li>
+          <li>{m.new_motion()}</li>
+          <li>{m.new_settings()}</li>
+          <li>{m.new_sides()}</li>
+          <li>{withKeys(m.new_keys())}</li>
+        </ul>
       </section>
 
       <section {...props(styles.section)}>
