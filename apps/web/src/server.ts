@@ -1,4 +1,5 @@
 import handler from '@tanstack/react-start/server-entry';
+import earlyScript from 'devknobs/early?raw';
 import { initWorkersLogger } from 'evlog/workers';
 import { canonicalRedirect } from './lib/canonical.ts';
 import { paraglideMiddleware } from './paraglide/server.js';
@@ -10,6 +11,41 @@ interface WorkerEnv {
 
 interface ExecutionContextLike {
   waitUntil(promise: Promise<unknown>): void;
+}
+
+// The Workers runtime's streaming HTML rewriter, as far as this file uses it.
+interface RewrittenElement {
+  prepend(content: string, options: { html: boolean }): void;
+  remove(): void;
+}
+declare class HTMLRewriter {
+  on(selector: string, handlers: { element(element: RewrittenElement): void }): HTMLRewriter;
+  transform(response: Response): Response;
+}
+
+/**
+ * Puts devknobs' early script first in `<head>`, ahead of the charset, viewport
+ * and stylesheets React hoists there, so a reload with a device set paints the
+ * device's mat from the first frame instead of the page full width. It takes
+ * the place of the empty slot `__root.tsx` renders for it, so React hydrates
+ * the slot onto this script and every other head script onto its own.
+ */
+function withEarlyScript(response: Response): Response {
+  if (!response.headers.get('content-type')?.startsWith('text/html')) {
+    return response;
+  }
+  return new HTMLRewriter()
+    .on('head', {
+      element(head) {
+        head.prepend(`<script data-devknobs-early>${earlyScript}</script>`, { html: true });
+      },
+    })
+    .on('script[data-devknobs-early]', {
+      element(slot) {
+        slot.remove();
+      },
+    })
+    .transform(response);
 }
 
 let loggerReady = false;
@@ -43,7 +79,7 @@ export default {
     try {
       const response =
         canonicalRedirect(url) ??
-        (await paraglideMiddleware(request, () => handler.fetch(request)));
+        withEarlyScript(await paraglideMiddleware(request, () => handler.fetch(request)));
       log.set({ status: response.status });
       return response;
     } catch (error) {

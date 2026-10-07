@@ -7,7 +7,10 @@ const config: StorybookConfig = {
   previewHead: (head) => `${head ?? ''}<link rel="stylesheet" href="/virtual:stylex.css" />`,
   stories: ['../src/**/*.stories.tsx'],
   viteFinal: (viteConfig) => {
-    viteConfig.plugins = [stylex.vite({ useCSSLayers: true }), ...(viteConfig.plugins ?? [])];
+    viteConfig.plugins = [
+      stylex.vite({ enableFontSizePxToRem: true, useCSSLayers: true }),
+      ...(viteConfig.plugins ?? []),
+    ];
     return viteConfig;
   },
 };

@@ -64,6 +64,14 @@ Web app (`apps/web`): `pnpm --filter @knobs/web dev` (:3000 standalone, or portl
 - StyleX in routes: import `../app.css` (build injection target); there is no importable `virtual:stylex.css` module; in dev the plugin middleware serves the CSS itself.
 - No tests live here: `packages/ui` stories cover the components, and the routes are a static page. Add a vitest project back if that changes.
 
+### Local devknobs in dev
+
+- The dev server runs devknobs from a local checkout, so the site is its test bed: `vite.config.ts` aliases `devknobs` to that checkout's `src/index.ts` (only under `vite dev`), and edits there reload the page. `node_modules` is never touched, so `pnpm install` cannot undo it.
+- The checkout is `DEVKNOBS_PATH` (shell env; absolute, or relative to the repo root), else `../devknobs` beside the repo, which also fits the `knobs.dev.<branch>` worktrees. To test a devknobs worktree: `DEVKNOBS_PATH=../devknobs.<branch> pnpm dev`.
+- Dev start prints which one is in use: `devknobs: local <path>`, or `devknobs: npm <version>` when no checkout is there.
+- Types, `vite build`, CI and prod use the pinned npm `devknobs` only. Device images come from the checkout's `assets/bezels` (a dev middleware maps the source's `src/engine/bezels/` URLs there).
+- The early script (`devknobs/early?raw`) goes first in `<head>` through `src/server.ts` (HTMLRewriter, into the empty `script[data-devknobs-early]` slot `__root.tsx` renders so hydration lines up). Builds inline the npm package's `dist/early.global.js`; under `vite dev` the plugin bundles the checkout's `src/early.ts` instead and rebuilds it when its sources change.
+
 ### Analytics
 
 - Self-hosted OpenPanel at `analytics.vinena.studio`. Page views plus four click events: `trackOutgoingLinks` and `trackAttributes` stay off, and one delegated `click` listener on `document` (`src/routes/index.tsx`, through `track` in `src/lib/analytics.ts`) sends `link_click` for the page's anchors and `knob_click` for the devknobs panel's buttons and search results, read off `composedPath()` because the panel's shadow root is open. The "try it" buttons send `try_click` from their own handler, and the code boxes' copy buttons send `copy_click` from theirs. The inline loader in `__root.tsx` skips automated browsers (`navigator.webdriver`) and the copy of the page devknobs loads in a device's frame (`window.top !== window`), so a device pick is not a second page view; a "try it" button pressed inside the frame hands its click (and its `try_click`) up to the page above through `window.knobsDemo`.
